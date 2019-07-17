@@ -1,6 +1,6 @@
 {
     "name": "mcashweb",
-    "version": "2.5.7-beta17",
+    "version": "2.7.0",
     "description": "JavaScript SDK that encapsulates the MCASH Node HTTP API",
     "main": "dist/McashWeb.node.js",
     "scripts": {
@@ -15,8 +15,7 @@
         "btest": "npm run build:dev && npm run test"
     },
     "husky": {
-        "hooks": {
-        }
+        "hooks": {}
     },
     "dependencies": {
         "@babel/runtime": "^7.0.0",

@@ -920,14 +920,14 @@ describe('McashWeb.transactionBuilder', function () {
 
     });
 
-    // describe("#applyForSR", async function () {
+    // describe("#createWitness", async function () {
     //
     //     let url = 'https://xtron.network';
     //
     //     it('should allow accounts[0] to apply for SR', async function () {
     //
     //
-    //         const transaction = await mcashWeb.transactionBuilder.applyForSR(accounts.b58[0], url);
+    //         const transaction = await mcashWeb.transactionBuilder.createWitness(accounts.b58[0], url);
     //         const parameter = txPars(transaction);
     //
     //         assert.equal(parameter.value.owner_address, accounts.hex[0]);
@@ -973,7 +973,7 @@ describe('McashWeb.transactionBuilder', function () {
 
         before(async function () {
 
-            await broadcaster(mcashWeb.transactionBuilder.applyForSR(accounts.b58[0], url), accounts.pks[0])
+            await broadcaster(mcashWeb.transactionBuilder.createWitness(accounts.b58[0], url), accounts.pks[0])
             await broadcaster(mcashWeb.transactionBuilder.freezeBalance(100e6, 3, 'BANDWIDTH', accounts.b58[1]), accounts.pks[1])
         })
 

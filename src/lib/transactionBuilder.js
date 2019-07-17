@@ -303,6 +303,31 @@ export default class TransactionBuilder {
         this.mcashWeb.fullNode.request('wallet/unfreezebalance', data, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
+    unfreezeAsset(address = this.mcashWeb.defaultAddress.hex, callback = false) {
+        if (utils.isFunction(address)) {
+            callback = address;
+            address = this.mcashWeb.defaultAddress.hex;
+        }
+
+        if (!callback)
+            return this.injectPromise(this.unfreezeAsset, address);
+
+        if (this.validator.notValid([
+            {
+                name: 'owner address',
+                type: 'address',
+                value: address
+            }
+        ], callback))
+            return;
+
+        const data = {
+            owner_address: toHex(address),
+        };
+
+        this.mcashWeb.fullNode.request('wallet/unfreezeasset', data, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
+    }
+
     stake(amount = 0, stakeDuration = 3, address = this.mcashWeb.defaultAddress.hex, callback = false) {
         if (utils.isFunction(address)) {
             callback = address;
@@ -395,7 +420,7 @@ export default class TransactionBuilder {
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
-    applyForSR(witnessAddress = false, ownerAddress = this.mcashWeb.defaultAddress.hex, url = false, callback = false) {
+    createWitness(witnessAddress = false, ownerAddress = this.mcashWeb.defaultAddress.hex, url = false, callback = false) {
         if (utils.isValidURL(ownerAddress)) {
             callback = url || false;
             url = ownerAddress;
@@ -403,7 +428,7 @@ export default class TransactionBuilder {
         }
 
         if (!callback)
-            return this.injectPromise(this.applyForSR, witnessAddress, ownerAddress, url);
+            return this.injectPromise(this.createWitness, witnessAddress, ownerAddress, url);
 
         if (this.validator.notValid([
             {

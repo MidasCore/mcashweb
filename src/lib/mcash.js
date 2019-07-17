@@ -1016,7 +1016,46 @@ export default class Mcash {
         }
     }
 
-        /**
+    /**
+     * Unfreeze Asset that has passed the minimum freeze duration.
+     *
+     * @param options
+     * @param callback
+     */
+    async unfreezeAsset(options = {}, callback = false) {
+        if (utils.isFunction(options)) {
+            callback = options;
+            options = {};
+        }
+
+        if (typeof options === 'string')
+            options = {privateKey: options};
+
+        if (!callback)
+            return this.injectPromise(this.unfreezeAsset, options);
+
+        options = {
+            privateKey: this.mcashWeb.defaultPrivateKey,
+            address: this.mcashWeb.defaultAddress.hex,
+            ...options
+        };
+
+        if (!options.privateKey && !options.address)
+            return callback('Function requires either a private key or address to be set');
+
+        try {
+            const address = options.privateKey ? this.mcashWeb.address.fromPrivateKey(options.privateKey) : options.address;
+            const unfreezeAssetTransaction = await this.mcashWeb.transactionBuilder.unfreezeAsset(address);
+            const signedTransaction = await this.sign(unfreezeAssetTransaction, options.privateKey || undefined);
+            const result = await this.sendRawTransaction(signedTransaction);
+
+            return callback(null, result);
+        } catch (ex) {
+            return callback(ex);
+        }
+    }
+
+    /**
      * Stake.
      * Will give voting power
      *
