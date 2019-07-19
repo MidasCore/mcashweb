@@ -225,7 +225,7 @@ export default class TransactionBuilder {
             {
                 name: 'duration',
                 type: 'integer',
-                gte: 3,
+                gte: 0,
                 value: duration
             },
             {
@@ -357,7 +357,7 @@ export default class TransactionBuilder {
             {
                 name: 'duration',
                 type: 'integer',
-                gte: 3,
+                gte: 0,
                 value: stakeDuration
             },
         ], callback))
