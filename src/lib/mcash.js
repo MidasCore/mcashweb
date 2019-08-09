@@ -172,6 +172,17 @@ export default class Mcash {
         if (!callback)
             return this.injectPromise(this.getTransactionInfo, transactionID);
 
+        this.mcashWeb.solidityNode.request('wallet/gettransactioninfobyid', {
+            value: transactionID
+        }, 'post').then(transaction => {
+            callback(null, transaction);
+        }).catch(err => callback(err));
+    }
+
+    getConfirmedTransactionInfo(transactionID, callback = false) {
+        if (!callback)
+            return this.injectPromise(this.getConfirmedTransactionInfo, transactionID);
+
         this.mcashWeb.solidityNode.request('walletsolidity/gettransactioninfobyid', {
             value: transactionID
         }, 'post').then(transaction => {

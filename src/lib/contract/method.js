@@ -226,7 +226,7 @@ export default class Method {
                     });
                 }
 
-                const output = await this.mcashWeb.mcash.getTransactionInfo(signedTransaction.tx_id);
+                const output = await this.mcashWeb.mcash.getConfirmedTransactionInfo(signedTransaction.tx_id);
 
                 if (!Object.keys(output).length) {
                     return setTimeout(() => {
