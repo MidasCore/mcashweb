@@ -517,7 +517,7 @@ export default class TransactionBuilder {
         if (!callback)
             return this.injectPromise(this.createSmartContract, options, issuerAddress);
 
-        const feeLimit = options.feeLimit || 100_000_000_000;
+        const feeLimit = options.feeLimit || 1_000_000_000;
         let userFeePercentage = options.userFeePercentage;
         if (typeof userFeePercentage !== 'number' && !userFeePercentage) {
             userFeePercentage = 100;
@@ -722,7 +722,7 @@ export default class TransactionBuilder {
             feeLimit
         } = Object.assign({
             callValue: 0,
-            feeLimit: 100_000_000_000
+            feeLimit: 1_000_000_000
         }, options);
 
         if (this.validator.notValid([
