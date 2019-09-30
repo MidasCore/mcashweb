@@ -123,6 +123,11 @@ export default class Validator {
                     }
                     break;
 
+                case 'string':
+                    if (!utils.isString(value)) {
+                        no = true;
+                    }
+                    break;
             }
             if (no) {
                 callback(this.invalid(param));

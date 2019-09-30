@@ -40,17 +40,23 @@ export default class TransactionBuilder {
         this.validator = new Validator(mcashWeb);
     }
 
-    sendMcash(to = false, amount = 0, from = this.mcashWeb.defaultAddress.hex, callback = false) {
+    sendMcash(to = false, amount = 0, from = this.mcashWeb.defaultAddress.hex, memo = '', callback = false) {
+        if (utils.isFunction(memo)) {
+            callback = memo;
+            memo = '';
+        }
         if (utils.isFunction(from)) {
             callback = from;
             from = this.mcashWeb.defaultAddress.hex;
+            memo = '';
         }
 
         if (!callback)
-            return this.injectPromise(this.sendMcash, to, amount, from);
+            return this.injectPromise(this.sendMcash, to, amount, from, memo);
 
         // accept amounts passed as strings
-        amount = parseInt(amount);
+        if (utils.isString(amount))
+            amount = parseInt(amount);
 
         if (this.validator.notValid([
             {
@@ -73,25 +79,41 @@ export default class TransactionBuilder {
                 type: 'integer',
                 gt: 0,
                 value: amount
+            },
+            {
+                name: 'memo',
+                type: 'string',
+                value: memo
             }
         ], callback))
             return;
 
-        this.mcashWeb.fullNode.request('wallet/createtransaction', {
+        let dataObj = {
             to_address: toHex(to),
             owner_address: toHex(from),
             amount: amount
-        }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
+        };
+        if (memo.length) {
+            dataObj['memo'] = fromUtf8(memo);
+        }
+
+        this.mcashWeb.fullNode.request('wallet/createtransaction', dataObj, 'post')
+            .then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
-    sendToken(to = false, amount = 0, tokenId = false, from = this.mcashWeb.defaultAddress.hex, callback = false) {
+    sendToken(to = false, amount = 0, tokenId = false, from = this.mcashWeb.defaultAddress.hex, memo = '', callback = false) {
         if (utils.isFunction(from)) {
             callback = from;
             from = this.mcashWeb.defaultAddress.hex;
         }
 
+        if (utils.isFunction(memo)) {
+            callback = memo;
+            memo = '';
+        }
+
         if (!callback)
-            return this.injectPromise(this.sendToken, to, amount, tokenId, from);
+            return this.injectPromise(this.sendToken, to, amount, tokenId, from, memo);
 
         if (utils.isString(amount))
             amount = parseInt(amount);
@@ -121,16 +143,27 @@ export default class TransactionBuilder {
                 name: 'token Id',
                 type: 'tokenId',
                 value: tokenId
+            },
+            {
+                name: 'memo',
+                type: 'string',
+                value: memo
             }
         ], callback))
             return;
 
-        this.mcashWeb.fullNode.request('wallet/transferasset', {
+        let dataObj = {
             to_address: toHex(to),
             owner_address: toHex(from),
             asset_id: tokenId,
             amount: amount
-        }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
+        };
+        if (memo.length) {
+            dataObj['memo'] = fromUtf8(memo);
+        }
+
+        this.mcashWeb.fullNode.request('wallet/transferasset', dataObj,
+            'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }
 
     purchaseToken(issuerAddress = false, tokenId = false, amount = 0, buyer = this.mcashWeb.defaultAddress.hex, callback = false) {

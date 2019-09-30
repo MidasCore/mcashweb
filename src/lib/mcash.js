@@ -824,7 +824,7 @@ export default class Mcash {
         }).catch(err => callback(err));
     }
 
-    async sendTransaction(to = false, amount = false, options = {}, callback = false) {
+    async sendTransaction(to = false, amount = false, memo = '', options = {}, callback = false) {
         if (utils.isFunction(options)) {
             callback = options;
             options = {};
@@ -834,13 +834,17 @@ export default class Mcash {
             options = {privateKey: options};
 
         if (!callback)
-            return this.injectPromise(this.sendTransaction, to, amount, options);
+            return this.injectPromise(this.sendTransaction, to, amount, memo, options);
 
         if (!this.mcashWeb.isAddress(to))
             return callback('Invalid recipient provided');
 
         if (!utils.isInteger(amount) || amount <= 0)
             return callback('Invalid amount provided');
+
+        if (!utils.isString(memo)) {
+            return callback('Invalid memo provided');
+        }
 
         options = {
             privateKey: this.mcashWeb.defaultPrivateKey,
@@ -853,7 +857,7 @@ export default class Mcash {
 
         try {
             const address = options.privateKey ? this.mcashWeb.address.fromPrivateKey(options.privateKey) : options.address;
-            const transaction = await this.mcashWeb.transactionBuilder.sendMcash(to, amount, address);
+            const transaction = await this.mcashWeb.transactionBuilder.sendMcash(to, amount, address, memo);
             const signedTransaction = await this.sign(transaction, options.privateKey || undefined);
             const result = await this.sendRawTransaction(signedTransaction);
 
@@ -863,7 +867,8 @@ export default class Mcash {
         }
     }
 
-    async sendToken(to = false, amount = false, tokenId = false, options = {}, callback = false) {
+
+    async sendToken(to = false, amount = false, tokenId = false, memo = '', options = {}, callback = false) {
         if (utils.isFunction(options)) {
             callback = options;
             options = {};
@@ -887,6 +892,9 @@ export default class Mcash {
         if (!utils.isInteger(tokenId))
             return callback('Invalid token ID provided');
 
+        if (!utils.isString(memo))
+            return callback('Invalid memo provided');
+
         options = {
             privateKey: this.mcashWeb.defaultPrivateKey,
             address: this.mcashWeb.defaultAddress.hex,
@@ -898,7 +906,7 @@ export default class Mcash {
 
         try {
             const address = options.privateKey ? this.mcashWeb.address.fromPrivateKey(options.privateKey) : options.address;
-            const transaction = await this.mcashWeb.transactionBuilder.sendToken(to, amount, tokenId, address);
+            const transaction = await this.mcashWeb.transactionBuilder.sendToken(to, amount, tokenId, address, memo);
             const signedTransaction = await this.sign(transaction, options.privateKey || undefined);
             const result = await this.sendRawTransaction(signedTransaction);
 
