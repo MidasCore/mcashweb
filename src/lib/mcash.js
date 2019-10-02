@@ -824,17 +824,23 @@ export default class Mcash {
         }).catch(err => callback(err));
     }
 
-    async sendTransaction(to = false, amount = false, memo = '', options = {}, callback = false) {
+    async sendTransaction(to = false, amount = false, options = {}, memo = '', callback = false) {
         if (utils.isFunction(options)) {
             callback = options;
             options = {};
+            memo = '';
+        }
+
+        if (utils.isFunction(memo)) {
+            callback = memo;
+            memo = '';
         }
 
         if (typeof options === 'string')
             options = {privateKey: options};
 
         if (!callback)
-            return this.injectPromise(this.sendTransaction, to, amount, memo, options);
+            return this.injectPromise(this.sendTransaction, to, amount, options, memo);
 
         if (!this.mcashWeb.isAddress(to))
             return callback('Invalid recipient provided');
@@ -868,17 +874,23 @@ export default class Mcash {
     }
 
 
-    async sendToken(to = false, amount = false, tokenId = false, memo = '', options = {}, callback = false) {
+    async sendToken(to = false, amount = false, tokenId = false, options = {}, memo = '', callback = false) {
         if (utils.isFunction(options)) {
             callback = options;
             options = {};
+            memo = '';
+        }
+
+        if (utils.isFunction(memo)) {
+            callback = memo;
+            memo = '';
         }
 
         if (typeof options === 'string')
             options = {privateKey: options};
 
         if (!callback)
-            return this.injectPromise(this.sendToken, to, amount, tokenId, options);
+            return this.injectPromise(this.sendToken, to, amount, tokenId, options, memo);
 
         if (!this.mcashWeb.isAddress(to))
             return callback('Invalid recipient provided');

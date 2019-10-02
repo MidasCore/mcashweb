@@ -624,7 +624,7 @@ describe('McashWeb.mcash', function () {
                 this.timeout(10000);
 
                 const balanceBefore = await mcashWeb.mcash.getUnconfirmedBalance(accounts.hex[toIdx]);
-                await mcashWeb.mcash.send(accounts.hex[toIdx], 10e5, '', { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] });
+                await mcashWeb.mcash.send(accounts.hex[toIdx], 10e5, { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] });
                 await waitChainData('balance', accounts.hex[toIdx], balanceBefore);
                 const balanceAfter = await mcashWeb.mcash.getUnconfirmedBalance(accounts.hex[toIdx]);
                 assert.equal(balanceAfter - balanceBefore, 10e5);
@@ -632,14 +632,14 @@ describe('McashWeb.mcash', function () {
 
             it('should throw invalid recipient provided error', async function () {
                 await assertThrow(
-                    mcashWeb.mcash.send('notValidAddress', 10e5, '', { privateKey: accounts.pks[fromIdx] }),
+                    mcashWeb.mcash.send('notValidAddress', 10e5, { privateKey: accounts.pks[fromIdx] }),
                     'Invalid recipient provided'
                 );
             });
 
             it('should throw invalid amount provided error', async function () {
                 await assertThrow(
-                    mcashWeb.mcash.send(accounts.hex[toIdx], -1, '', { privateKey: accounts.pks[fromIdx] }),
+                    mcashWeb.mcash.send(accounts.hex[toIdx], -1, { privateKey: accounts.pks[fromIdx] }),
                     'Invalid amount provided'
                 );
             });
@@ -656,7 +656,7 @@ describe('McashWeb.mcash', function () {
                 this.timeout(10000);
 
                 const balanceBefore = await mcashWeb.mcash.getUnconfirmedBalance(accounts.hex[toIdx]);
-                await mcashWeb.mcash.sendTransaction(accounts.hex[toIdx], 10e5, '', { privateKey: accounts.pks[fromIdx] });
+                await mcashWeb.mcash.sendTransaction(accounts.hex[toIdx], 10e5, { privateKey: accounts.pks[fromIdx] });
                 await waitChainData('balance', accounts.hex[toIdx], balanceBefore);
                 const balanceAfter = await mcashWeb.mcash.getUnconfirmedBalance(accounts.hex[toIdx]);
                 assert.equal(balanceAfter - balanceBefore, 10e5);
@@ -664,14 +664,14 @@ describe('McashWeb.mcash', function () {
 
             it('should throw invalid recipient provided error', async function () {
                 await assertThrow(
-                    mcashWeb.mcash.sendTransaction('notValidAddress', 10e5, '', { privateKey: accounts.pks[fromIdx] }),
+                    mcashWeb.mcash.sendTransaction('notValidAddress', 10e5,  { privateKey: accounts.pks[fromIdx] }),
                     'Invalid recipient provided'
                 );
             });
 
             it('should throw invalid amount provided error', async function () {
                 await assertThrow(
-                    mcashWeb.mcash.sendTransaction(accounts.hex[toIdx], -1, '', { privateKey: accounts.pks[fromIdx] }),
+                    mcashWeb.mcash.sendTransaction(accounts.hex[toIdx], -1, { privateKey: accounts.pks[fromIdx] }),
                     'Invalid amount provided'
                 );
             });
@@ -688,7 +688,7 @@ describe('McashWeb.mcash', function () {
                 this.timeout(10000);
 
                 const balanceBefore = await mcashWeb.mcash.getUnconfirmedBalance(accounts.hex[toIdx]);
-                await mcashWeb.mcash.sendMcash(accounts.hex[toIdx], 10e5, '', { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] });
+                await mcashWeb.mcash.sendMcash(accounts.hex[toIdx], 10e5, { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] });
                 await waitChainData('balance', accounts.hex[toIdx], balanceBefore);
                 const balanceAfter = await mcashWeb.mcash.getUnconfirmedBalance(accounts.hex[toIdx]);
                 assert.equal(balanceAfter - balanceBefore, 10e5);
@@ -696,14 +696,14 @@ describe('McashWeb.mcash', function () {
 
             it('should throw invalid recipient provided error', async function () {
                 await assertThrow(
-                    mcashWeb.mcash.sendMcash('notValidAddress', 10e5, '', { privateKey: accounts.pks[fromIdx] }),
+                    mcashWeb.mcash.sendMcash('notValidAddress', 10e5, { privateKey: accounts.pks[fromIdx] }),
                     'Invalid recipient provided'
                 );
             });
 
             it('should throw invalid amount provided error', async function () {
                 await assertThrow(
-                    mcashWeb.mcash.sendMcash(accounts.hex[18], -1, '', { privateKey: accounts.pks[fromIdx] }),
+                    mcashWeb.mcash.sendMcash(accounts.hex[18], -1, { privateKey: accounts.pks[fromIdx] }),
                     'Invalid amount provided'
                 );
             });
@@ -1014,7 +1014,6 @@ describe('McashWeb.mcash', function () {
                     accounts.hex[toIdx],
                     10e4,
                     token[Object.keys(token)[0]]['id'],
-                    '',
                     { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] }
                 );
 
@@ -1029,7 +1028,6 @@ describe('McashWeb.mcash', function () {
                         'notValidAddress',
                         10e4,
                         token[Object.keys(token)[0]]['id'],
-                        '',
                         { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] }
                     ),
                     'Invalid recipient provided'
@@ -1042,7 +1040,6 @@ describe('McashWeb.mcash', function () {
                         accounts.hex[toIdx],
                         -10,
                         token[Object.keys(token)[0]]['id'],
-                        '',
                         { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] }
                     ),
                     'Invalid amount provided'
@@ -1055,7 +1052,6 @@ describe('McashWeb.mcash', function () {
                         accounts.hex[toIdx],
                         10e4,
                         {},
-                        '',
                         { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] }
                     ),
                     'Invalid token ID provided'
@@ -1068,7 +1064,6 @@ describe('McashWeb.mcash', function () {
                         accounts.hex[fromIdx],
                         10e4,
                         token[Object.keys(token)[0]]['id'],
-                        '',
                         { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] }
                     ),
                     'Cannot transfer tokens to the same account'
@@ -1144,7 +1139,6 @@ describe('McashWeb.mcash', function () {
                         accounts.hex[toIdx],
                         10e4,
                         {},
-                        '',
                         { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] }
                     ),
                     'Invalid token ID provided'
@@ -1157,7 +1151,6 @@ describe('McashWeb.mcash', function () {
                         accounts.hex[fromIdx],
                         10e4,
                         token[Object.keys(token)[0]]['id'],
-                        '',
                         { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] }
                     ),
                     'Cannot transfer tokens to the same account'
