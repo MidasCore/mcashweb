@@ -1,6 +1,6 @@
 {
     "name": "mcashweb",
-    "version": "2.7.3",
+    "version": "2.7.4",
     "description": "JavaScript SDK that encapsulates the MCASH Node HTTP API",
     "main": "dist/McashWeb.node.js",
     "scripts": {
@@ -26,7 +26,7 @@
         "ethers": "^4.0.7",
         "eventemitter3": "^3.1.0",
         "semver": "^5.6.0",
-        "validator": "^10.7.1"
+        "validator": "^12.1.0"
     },
     "devDependencies": {
         "@babel/core": "^7.0.0",

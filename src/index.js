@@ -70,7 +70,7 @@ export default class McashWeb extends EventEmitter {
         [
             'sha3', 'toHex', 'toUtf8', 'fromUtf8',
             'toAscii', 'fromAscii', 'toDecimal', 'fromDecimal',
-            'toSun', 'fromSun', 'toBigNumber', 'isAddress',
+            'toMatoshi', 'fromMatoshi', 'toBigNumber', 'isAddress',
             'createAccount', 'address', 'version'
         ].forEach(key => {
             this[key] = McashWeb[key];
