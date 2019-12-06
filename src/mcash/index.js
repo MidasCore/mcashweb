@@ -58,10 +58,10 @@ export default class Mcash {
         if (block === false)
             return callback('No block identifier provided');
 
-        if (block == 'earliest')
+        if (block === 'earliest')
             block = 0;
 
-        if (block == 'latest')
+        if (block === 'latest')
             return this.getCurrentBlock(callback);
 
         if (isNaN(block) && utils.isHex(block))
@@ -529,7 +529,7 @@ export default class Mcash {
             return this.injectPromise(this.timeUntilNextVoteCycle);
 
         this.mcashWeb.fullNode.request('wallet/getnextmaintenancetime').then(({num = -1}) => {
-            if (num == -1)
+            if (num === -1)
                 return callback('Failed to get time until next vote cycle');
 
             callback(null, Math.floor(num / 1000));
@@ -560,25 +560,25 @@ export default class Mcash {
         }).catch(err => callback(err));
     }
 
-    async verifyMessage(message = false, signature = false, address = this.mcashWeb.defaultAddress.base58, useTronHeader = true, callback = false) {
+    async verifyMessage(message = false, signature = false, address = this.mcashWeb.defaultAddress.base58, useMcashHeader = true, callback = false) {
         if (utils.isFunction(address)) {
             callback = address;
             address = this.mcashWeb.defaultAddress.base58;
-            useTronHeader = true;
+            useMcashHeader = true;
         }
 
-        if (utils.isFunction(useTronHeader)) {
-            callback = useTronHeader;
-            useTronHeader = true;
+        if (utils.isFunction(useMcashHeader)) {
+            callback = useMcashHeader;
+            useMcashHeader = true;
         }
 
         if (!callback)
-            return this.injectPromise(this.verifyMessage, message, signature, address, useTronHeader);
+            return this.injectPromise(this.verifyMessage, message, signature, address, useMcashHeader);
 
         if (!utils.isHex(message))
             return callback('Expected hex message input');
 
-        if (Mcash.verifySignature(message, address, signature, useTronHeader))
+        if (Mcash.verifySignature(message, address, signature, useMcashHeader))
             return callback(null, true);
 
         callback('Signature does not match');
@@ -594,7 +594,7 @@ export default class Mcash {
 
         const messageDigest = keccak256(messageBytes);
         const recovered = recoverAddress(messageDigest, {
-            recoveryParam: signature.substring(128, 130) == '1c' ? 1 : 0,
+            recoveryParam: signature.substring(128, 130) === '1c' ? 1 : 0,
             r: '0x' + signature.substring(0, 64),
             s: '0x' + signature.substring(64, 128)
         });
@@ -602,7 +602,7 @@ export default class Mcash {
         const tronAddress = ADDRESS_PREFIX + recovered.substr(2);
         const base58Address = McashWeb.address.fromHex(tronAddress);
 
-        return base58Address == McashWeb.address.fromHex(address);
+        return base58Address === McashWeb.address.fromHex(address);
     }
 
     async sign(transaction = false, privateKey = this.mcashWeb.defaultPrivateKey, useTronHeader = true, multisig = false, callback = false) {
@@ -708,7 +708,7 @@ export default class Mcash {
             return callback('Invalid transaction provided');
 
         // set permission id
-        transaction.raw_data.contract[0].Permission_id = permissionId;
+        transaction.raw_data.contract[0].permission_id = permissionId;
 
         // check if private key insides permission list
         const address = this.mcashWeb.address.toHex(this.mcashWeb.address.fromPrivateKey(privateKey)).toLowerCase();
@@ -727,14 +727,14 @@ export default class Mcash {
         if (!foundKey)
             return callback(privateKey + ' has no permission to sign');
 
-        if (signWeight.approved_list && signWeight.approved_list.indexOf(address) != -1) {
+        if (signWeight.approved_list && signWeight.approved_list.indexOf(address) !== -1) {
             return callback(privateKey + ' already sign transaction');
         }
 
         // reset transaction
         if (signWeight.transaction && signWeight.transaction.transaction) {
             transaction = signWeight.transaction.transaction;
-            transaction.raw_data.contract[0].Permission_id = permissionId;
+            transaction.raw_data.contract[0].permission_id = permissionId;
         } else {
             return callback('Invalid transaction provided');
         }
@@ -777,9 +777,9 @@ export default class Mcash {
             return callback('Invalid transaction provided');
 
         if (utils.isInteger(permissionId)) {
-            transaction.raw_data.contract[0].Permission_id = parseInt(permissionId);
-        } else if (typeof transaction.raw_data.contract[0].Permission_id !== 'number') {
-            transaction.raw_data.contract[0].Permission_id = 0;
+            transaction.raw_data.contract[0].permission_id = parseInt(permissionId);
+        } else if (typeof transaction.raw_data.contract[0].permission_id !== 'number') {
+            transaction.raw_data.contract[0].permission_id = 0;
         }
 
         if (!utils.isObject(transaction))
@@ -825,14 +825,14 @@ export default class Mcash {
     }
 
     async sendTransaction(to = false, amount = false, options = {}, memo = '', callback = false) {
-        if (utils.isFunction(options)) {
-            callback = options;
-            options = {};
+        if (utils.isFunction(memo)) {
+            callback = memo;
             memo = '';
         }
 
-        if (utils.isFunction(memo)) {
-            callback = memo;
+        if (utils.isFunction(options)) {
+            callback = options;
+            options = {};
             memo = '';
         }
 
@@ -875,14 +875,14 @@ export default class Mcash {
 
 
     async sendToken(to = false, amount = false, tokenId = false, options = {}, memo = '', callback = false) {
-        if (utils.isFunction(options)) {
-            callback = options;
-            options = {};
+        if (utils.isFunction(memo)) {
+            callback = memo;
             memo = '';
         }
 
-        if (utils.isFunction(memo)) {
-            callback = memo;
+        if (utils.isFunction(options)) {
+            callback = options;
+            options = {};
             memo = '';
         }
 

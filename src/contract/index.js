@@ -40,7 +40,7 @@ export default class Contract {
             }
 
             const duplicate = events.slice(0, index).some(priorEvent => (
-                JSON.stringify(priorEvent) == JSON.stringify(event)
+                JSON.stringify(priorEvent) === JSON.stringify(event)
             ));
 
             if (duplicate)
@@ -178,7 +178,7 @@ export default class Contract {
                 return callback({
                     error: contract.code,
                     message: this.mcashWeb.toUtf8(contract.message)
-                })
+                });
 
             return this.at(signedTransaction.contract_address, callback);
         } catch (ex) {

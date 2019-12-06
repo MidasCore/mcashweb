@@ -16,16 +16,16 @@ export function getBase58CheckAddress(addressBytes) {
     return encode58(checkSum);
 }
 
-export function decodeBase58Address(base58Sting) {
-    if (typeof (base58Sting) != 'string')
+export function decodeBase58Address(base58String) {
+    if (typeof (base58String) != 'string')
         return false;
 
-    if (base58Sting.length <= 4)
+    if (base58String.length <= 4)
         return false;
 
-    let address = decode58(base58Sting);
+    let address = decode58(base58String);
 
-    if (base58Sting.length <= 4)
+    if (base58String.length <= 4)
         return false;
 
     const len = address.length;
@@ -38,9 +38,8 @@ export function decodeBase58Address(base58Sting) {
     const hash1 = SHA256(hash0);
     const checkSum1 = hash1.slice(0, 4);
 
-    if (checkSum[0] == checkSum1[0] && checkSum[1] == checkSum1[1] && checkSum[2] ==
-        checkSum1[2] && checkSum[3] == checkSum1[3]
-    ) {
+    if (checkSum[0] === checkSum1[0] && checkSum[1] === checkSum1[1] &&
+        checkSum[2] === checkSum1[2] && checkSum[3] === checkSum1[3]) {
         return address;
     }
 

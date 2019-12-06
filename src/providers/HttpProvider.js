@@ -46,8 +46,8 @@ export default class HttpProvider {
         method = method.toLowerCase();
 
         return this.instance.request({
-            data: method == 'post' && Object.keys(payload).length ? payload : null,
-            params: method == 'get' && payload,
+            data: method === 'post' && Object.keys(payload).length ? payload : null,
+            params: method === 'get' && payload,
             url,
             method
         }).then(({data}) => data);

@@ -1,14 +1,14 @@
-import providers from 'lib/providers';
+import providers from 'providers';
 import utils from 'utils';
 import BigNumber from 'bignumber.js';
 import EventEmitter from 'eventemitter3';
 import {version} from '../package.json';
 
-import TransactionBuilder from 'lib/transactionBuilder';
-import Mcash from 'lib/mcash';
-import Contract from 'lib/contract';
-import Plugin from 'lib/plugin';
-import Event from 'lib/event';
+import TransactionBuilder from 'transactionBuilder';
+import Mcash from 'mcash';
+import Contract from 'contract';
+import Plugin from 'plugin';
+import Event from 'event';
 import {keccak256} from 'utils/ethersUtils';
 import {ADDRESS_PREFIX} from 'utils/address';
 
@@ -25,7 +25,9 @@ export default class McashWeb extends EventEmitter {
 
     constructor(options = false,
                 // for retro-compatibility:
-                solidityNode = false, eventServer = false, privateKey = false) {
+                solidityNode = false,
+                eventServer = false,
+                privateKey = false) {
         super();
 
         let fullNode;
@@ -107,13 +109,13 @@ export default class McashWeb extends EventEmitter {
     }
 
     setAddress(address) {
-        if (!this.isAddress(address))
+        if (!McashWeb.isAddress(address))
             throw new Error('Invalid address provided');
 
-        const hex = this.address.toHex(address);
-        const base58 = this.address.fromHex(address);
+        const hex = McashWeb.address.toHex(address);
+        const base58 = McashWeb.address.fromHex(address);
 
-        if (this.defaultPrivateKey && this.address.fromPrivateKey(this.defaultPrivateKey) !== base58)
+        if (this.defaultPrivateKey && McashWeb.address.fromPrivateKey(this.defaultPrivateKey) !== base58)
             this.defaultPrivateKey = false;
 
         this.defaultAddress = {
@@ -176,8 +178,8 @@ export default class McashWeb extends EventEmitter {
                 blockNumber: params[3] || false,
                 size: params[4] || 20,
                 page: params[5] || 1
-            }
-            params.splice(2, 4)
+            };
+            params.splice(2, 4);
 
             // callback:
             if (!utils.isFunction(params[2])) {
@@ -315,12 +317,12 @@ export default class McashWeb extends EventEmitter {
     }
 
     static fromMatoshi(matoshi) {
-        const mcash = McashWeb.toBigNumber(matoshi).div(100_000_000);
+        const mcash = McashWeb.toBigNumber(matoshi).div(100000000);
         return utils.isBigNumber(matoshi) ? mcash : mcash.toString(10);
     }
 
     static toMatoshi(mcash) {
-        const matoshi = McashWeb.toBigNumber(mcash).times(100_000_000);
+        const matoshi = McashWeb.toBigNumber(mcash).times(100000000);
         return utils.isBigNumber(mcash) ? matoshi : matoshi.toString(10);
     }
 
@@ -358,9 +360,7 @@ export default class McashWeb extends EventEmitter {
     }
 
     static async createAccount() {
-        const account = utils.accounts.generateAccount();
-
-        return account;
+        return utils.accounts.generateAccount();
     }
 
     async isConnected(callback = false) {

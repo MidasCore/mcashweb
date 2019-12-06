@@ -1,6 +1,6 @@
 {
     "name": "mcashweb",
-    "version": "2.7.5",
+    "version": "2.7.6-beta1",
     "description": "JavaScript SDK that encapsulates the MCASH Node HTTP API",
     "main": "dist/McashWeb.node.js",
     "scripts": {
@@ -78,6 +78,7 @@
             "url": "https://github.com/MidasCore"
         }
     ],
+    "types": "./types/index.d.ts",
     "homepage": "https://github.com/MidasCore/mcashweb",
     "license": "MIT",
     "repository": "https://github.com/MidasCore/mcashweb.git"

@@ -3,11 +3,11 @@ import {ADDRESS_PREFIX_REGEX} from 'utils/address';
 
 const getFunctionSelector = abi => {
     return abi.name + '(' + getParamTypes(abi.inputs || []).join(',') + ')';
-}
+};
 
 const getParamTypes = params => {
     return params.map(({type}) => type);
-}
+};
 
 const decodeOutput = (abi, output) => {
     const names = abi.map(({name}) => name).filter(name => !!name);
@@ -47,12 +47,12 @@ export default class Method {
         const types = getParamTypes(this.inputs);
 
         args.forEach((arg, index) => {
-            if (types[index] == 'address')
-                args[index] = this.mcashWeb.address.toHex(arg).replace(ADDRESS_PREFIX_REGEX, '0x')
+            if (types[index] === 'address')
+                args[index] = this.mcashWeb.address.toHex(arg).replace(ADDRESS_PREFIX_REGEX, '0x');
 
-            if (types[index] == 'address[]') {
+            if (types[index] === 'address[]') {
                 args[index] = args[index].map(address => {
-                    return this.mcashWeb.address.toHex(address).replace(ADDRESS_PREFIX_REGEX, '0x')
+                    return this.mcashWeb.address.toHex(address).replace(ADDRESS_PREFIX_REGEX, '0x');
                 })
             }
         });
@@ -114,13 +114,13 @@ export default class Method {
 
                 try {
 
-                    const len = transaction.constant_result[0].length
+                    const len = transaction.constant_result[0].length;
                     if (len === 0 || len % 64 === 8) {
-                        let msg = 'The call has been reverted or has thrown an error.'
+                        let msg = 'The call has been reverted or has thrown an error.';
                         if (len !== 0) {
-                            msg += ' Error message: '
-                            let msg2 = ''
-                            let chunk = transaction.constant_result[0].substring(8)
+                            msg += ' Error message: ';
+                            let msg2 = '';
+                            let chunk = transaction.constant_result[0].substring(8);
                             for (let i = 0; i < len - 8; i += 64) {
                                 msg2 += this.mcashWeb.toUtf8(chunk.substring(i, i + 64))
                             }
@@ -213,13 +213,13 @@ export default class Method {
                 return callback({
                     error: broadcast.code,
                     message: this.mcashWeb.toUtf8(broadcast.message)
-                })
+                });
 
             if (!options.shouldPollResponse)
                 return callback(null, signedTransaction.tx_id);
 
             const checkResult = async (index = 0) => {
-                if (index == 20) {
+                if (index === 20) {
                     return callback({
                         error: 'Cannot find result in solidity node',
                         transaction: signedTransaction
@@ -234,7 +234,7 @@ export default class Method {
                     }, 3000);
                 }
 
-                if (output.result && output.result == 'FAILED') {
+                if (output.result && output.result === 'FAILED') {
                     return callback({
                         error: this.mcashWeb.toUtf8(output.res_message),
                         transaction: signedTransaction,
@@ -259,7 +259,7 @@ export default class Method {
                     decoded = decoded[0];
 
                 return callback(null, decoded);
-            }
+            };
 
             checkResult();
         } catch (ex) {
@@ -298,12 +298,12 @@ export default class Method {
                     sort: 'block_timestamp',
                     blockNumber: 'latest',
                     filters: options.filters
-                }
+                };
                 if (options.resourceNode) {
                     if (/full/i.test(options.resourceNode))
-                        params.onlyUnconfirmed = true
+                        params.onlyUnconfirmed = true;
                     else
-                        params.onlyConfirmed = true
+                        params.onlyConfirmed = true;
                 }
 
                 const events = await this.mcashWeb.event.getEventsByContractAddress(this.contract.address, params);
@@ -316,7 +316,7 @@ export default class Method {
                     }
 
                     const duplicate = events.slice(0, index).some(priorEvent => (
-                        JSON.stringify(priorEvent) == JSON.stringify(event)
+                        JSON.stringify(priorEvent) === JSON.stringify(event)
                     ));
 
                     if (duplicate)

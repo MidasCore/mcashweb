@@ -20,7 +20,7 @@ export function decodeParams(names, types, output, ignoreMethodHash) {
         throw new Error('The encoded string is not valid. Its length must be a multiple of 64.');
 
     return abiCoder.decode(types, output).reduce((obj, arg, index) => {
-        if (types[index] == 'address')
+        if (types[index] === 'address')
             arg = ADDRESS_PREFIX + arg.substr(2).toLowerCase();
 
         if (names.length)

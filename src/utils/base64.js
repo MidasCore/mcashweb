@@ -33,7 +33,7 @@ export function Base64() {
         }
 
         return output;
-    }
+    };
 
     this.encodeIgnoreUtf8 = inputBytes => {
         let output = "";
@@ -67,7 +67,7 @@ export function Base64() {
         }
 
         return output;
-    }
+    };
 
     this.decode = input => {
         let output = "";
@@ -94,15 +94,15 @@ export function Base64() {
 
             output = output + String.fromCharCode(chr1);
 
-            if (enc3 != 64)
+            if (enc3 !== 64)
                 output = output + String.fromCharCode(chr2);
 
-            if (enc4 != 64)
+            if (enc4 !== 64)
                 output = output + String.fromCharCode(chr3);
         }
 
         return this._utf8_decode(output);
-    }
+    };
 
     this.decodeToByteArray = input => {
         let output = "";
@@ -129,15 +129,15 @@ export function Base64() {
 
             output = output + String.fromCharCode(chr1);
 
-            if (enc3 != 64)
+            if (enc3 !== 64)
                 output = output + String.fromCharCode(chr2);
 
-            if (enc4 != 64)
+            if (enc4 !== 64)
                 output = output + String.fromCharCode(chr3);
         }
 
         return this._out2ByteArray(output);
-    }
+    };
 
     this._out2ByteArray = utftext => {
         const byteArray = new Array(utftext.length);
@@ -152,7 +152,7 @@ export function Base64() {
         }
 
         return byteArray;
-    }
+    };
 
     this._utf8_encode = string => {
         string = string.replace(/\r\n/g, "\n");
@@ -174,7 +174,7 @@ export function Base64() {
         }
 
         return utftext;
-    }
+    };
 
     this._utf8_decode = utftext => {
         let string = "";
