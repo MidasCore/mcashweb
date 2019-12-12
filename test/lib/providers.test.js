@@ -69,7 +69,7 @@ describe('McashWeb.lib.providers', async function () {
         it('should request a route', async function () {
             const provider = new McashWeb.providers.HttpProvider(FULL_NODE_API);
             const result = await provider.request('/wallet/getnowblock');
-            assert.equal(result.blockID.length, 64);
+            assert.equal(result.block_id.length, 64);
         });
 
         it('should throw if the route is missed or returns an error', async function () {

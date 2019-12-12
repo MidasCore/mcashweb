@@ -1,16 +1,16 @@
-import providers from 'providers';
-import utils from 'utils';
+import providers from './providers';
+import utils from './utils';
 import BigNumber from 'bignumber.js';
 import EventEmitter from 'eventemitter3';
 import {version} from '../package.json';
 
-import TransactionBuilder from 'transactionBuilder';
-import Mcash from 'mcash';
-import Contract from 'contract';
-import Plugin from 'plugin';
-import Event from 'event';
-import {keccak256} from 'utils/ethersUtils';
-import {ADDRESS_PREFIX} from 'utils/address';
+import TransactionBuilder from './transactionBuilder';
+import Mcash from './mcash';
+import Contract from './contract';
+import Plugin from './plugin';
+import Event from './event';
+import {keccak256} from './utils/ethersUtils';
+import {ADDRESS_PREFIX} from './utils/address';
 
 export default class McashWeb extends EventEmitter {
     static providers = providers;
@@ -369,7 +369,7 @@ export default class McashWeb extends EventEmitter {
 
         return callback(null, {
             fullNode: await this.fullNode.isConnected(),
-            solidityNode: await this.solidityNode.isConnected(),
+            solidityNode: this.solidityNode && await this.solidityNode.isConnected(),
             eventServer: this.eventServer && await this.eventServer.isConnected()
         });
     }

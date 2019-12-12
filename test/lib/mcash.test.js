@@ -1,20 +1,15 @@
 const chai = require('chai');
 const assert = chai.assert;
-const txPars = require('../helpers/txPars');
-const jlog = require('../helpers/jlog');
 const assertThrow = require('../helpers/assertThrow');
 const wait = require('../helpers/wait');
 const broadcaster = require('../helpers/broadcaster');
-const pollAccountFor = require('../helpers/pollAccountFor');
 const _ = require('lodash');
 const mcashWebBuilder = require('../helpers/mcashWebBuilder');
-const assertEqualHex = require('../helpers/assertEqualHex');
 const McashWeb = mcashWebBuilder.McashWeb;
-const config = require('../helpers/config');
 const waitChainData = require('../helpers/waitChainData');
 const {
-    ADDRESS_BASE58,
-    PRIVATE_KEY,
+    ADDRESS_FOUNDATION,
+    PRIVATE_KEY_FOUNDATION,
     getTokenOptions,
 } = require('../helpers/config');
 const testRevertContract = require('../fixtures/contracts').testRevert;
@@ -27,8 +22,8 @@ describe('McashWeb.mcash', function () {
 
     before(async function () {
         mcashWeb = mcashWebBuilder.createInstance();
-        // ALERT this works only with Tron Quickstart:
-        accounts = await mcashWebBuilder.getTestAccounts(-1);
+        // ALERT this works only with Quickstart:
+        accounts = await mcashWebBuilder.getTestAccounts();
         emptyAccount = await McashWeb.createAccount();
     });
 
@@ -48,7 +43,7 @@ describe('McashWeb.mcash', function () {
 
         describe("#getAccount", async function () {
 
-            const idx = 10;
+            const idx = 3;
 
             it('should get account by hex or base58 address', async function () {
                 const addressType = ['hex', 'b58'];
@@ -78,8 +73,8 @@ describe('McashWeb.mcash', function () {
                 let accountResource;
                 for (let type of addressType) {
                     accountResource = await mcashWeb.mcash.getAccountResources(accounts[type][idx]);
-                    assert.isDefined(accountResource.freeNetLimit);
-                    assert.isDefined(accountResource.TotalEnergyLimit);
+                    assert.isDefined(accountResource.free_bandwidth_limit);
+                    assert.isDefined(accountResource.total_energy_limit);
                 }
             });
 
@@ -107,23 +102,6 @@ describe('McashWeb.mcash', function () {
             });
 
         });
-
-
-        describe("#getBandwidth", async function () {
-
-            const idx = 10;
-
-            it('should get bandwith by hex or base58 address', async function () {
-                const addressType = ['hex', 'b58'];
-                let bp;
-                for (let type of addressType) {
-                    bp = await mcashWeb.mcash.getBandwidth(accounts[type][idx]);
-                    assert.isTrue(bp >= 0);
-                }
-            });
-
-        });
-
 
         describe("#getUnconfirmedAccount", async function () {
 
@@ -210,7 +188,7 @@ describe('McashWeb.mcash', function () {
             let transaction;
 
             beforeEach(async function() {
-                transaction = await mcashWeb.transactionBuilder.freezeBalance(10e5, 3, 'BANDWIDTH', accounts.b58[idx]);
+                transaction = await mcashWeb.transactionBuilder.freezeBalance(1e8, 3, 'BANDWIDTH', accounts.b58[idx]);
             });
 
             it('should sign a transaction', async function () {
@@ -299,8 +277,8 @@ describe('McashWeb.mcash', function () {
         });
 
 
-        describe("#multiSignTransaction", async function () {
-
+        describe.skip("#multiSignTransaction", async function () {
+            // TODO
             const ownerIdx = 15;
             const idxS = 15;
             const idxE = 18;
@@ -390,7 +368,7 @@ describe('McashWeb.mcash', function () {
                 try {
                     await mcashWeb.mcash.multiSign(transaction, (accounts.pks[ownerIdx] + '123'), 0);
                 } catch (e) {
-                    assert.isTrue(e.indexOf('has no permission to sign') != -1);
+                    assert.isTrue(e.indexOf('has no permission to sign') !== -1);
                 }
 
             });
@@ -402,7 +380,7 @@ describe('McashWeb.mcash', function () {
                     let signedTransaction = await mcashWeb.mcash.multiSign(transaction, accounts.pks[ownerIdx], 0);
                     await mcashWeb.mcash.multiSign(signedTransaction, accounts.pks[ownerIdx], 0);
                 } catch (e) {
-                    assert.isTrue(e.indexOf('already sign transaction') != -1);
+                    assert.isTrue(e.indexOf('already sign transaction') !== -1);
                 }
 
             });
@@ -507,13 +485,13 @@ describe('McashWeb.mcash', function () {
         describe("#getBlock", async function () {
 
             it('should get earliest or latest block', async function () {
-                let earliestParentHash = '957dc2d350daecc7bb6a38f3938ebde0a0c1cedafe15f0edae4256a2907449f6';
+                let earliestParentHash = '6569dce74bf60578f77f0e6eac9cc667f8e224b654a842b7667ae0fd95f17205';
                 const blockType = ['earliest', 'latest'];
                 let block;
                 for (let type of blockType) {
                     block = await mcashWeb.mcash.getBlock(type);
                     if (type === 'earliest') {
-                        assert.equal(earliestParentHash, block.block_header.raw_data.parentHash);
+                        assert.equal(earliestParentHash, block.block_header.raw_data.parent_hash);
                     }
                     if (type === 'latest') {
                         assert.isNumber(block.block_header.raw_data.number);
@@ -549,8 +527,8 @@ describe('McashWeb.mcash', function () {
 
             it('should get block by block hash (id)', async function () {
                 const block = await mcashWeb.mcash.getBlock('latest');
-                const blockByHash = await mcashWeb.mcash.getBlockByHash(block.blockID);
-                assert.equal(block.blockID, blockByHash.blockID);
+                const blockByHash = await mcashWeb.mcash.getBlockByHash(block.block_id);
+                assert.equal(block.block_id, blockByHash.block_id);
             });
 
         });
@@ -561,7 +539,7 @@ describe('McashWeb.mcash', function () {
             it('should get block by block number', async function () {
                 const block = await mcashWeb.mcash.getBlock('latest');
                 const blockByNumber = await mcashWeb.mcash.getBlockByNumber(block.block_header.raw_data.number);
-                assert.equal(block.blockID, blockByNumber.blockID);
+                assert.equal(block.block_id, blockByNumber.block_id);
             });
 
         });
@@ -720,21 +698,21 @@ describe('McashWeb.mcash', function () {
                 this.timeout(20000);
 
                 let accountBefore = await mcashWeb.mcash.getAccount(accounts.hex[idx]);
-                await mcashWeb.mcash.freezeBalance(10e5, 3, 'BANDWIDTH', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
+                await mcashWeb.mcash.freezeBalance(1e8, 3, 'BANDWIDTH', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
                 await waitChainData('freezeBp', accounts.hex[idx], 0);
                 let accountAfter = await mcashWeb.mcash.getUnconfirmedAccount(accounts.hex[idx]);
-                assert.equal((!accountBefore.frozen ? 0: accountBefore.frozen[0].frozen_balance) + 10e5, accountAfter.frozen[0].frozen_balance);
+                assert.equal((!accountBefore.frozen_for_bandwidth ? 0: accountBefore.frozen_for_bandwidth.frozen_balance) + 1e8, accountAfter.frozen_for_bandwidth.frozen_balance);
 
                 accountBefore = accountAfter;
-                await mcashWeb.mcash.freezeBalance(10e5, 3, 'ENERGY', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
+                await mcashWeb.mcash.freezeBalance(1e8, 3, 'ENERGY', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
                 await waitChainData('freezeEnergy', accounts.hex[idx], 0);
                 accountAfter = await mcashWeb.mcash.getUnconfirmedAccount(accounts.hex[idx]);
                 assert.equal(
-                    (!accountBefore.account_resource ||
-                    !accountBefore.account_resource.frozen_balance_for_energy
+                    (!accountBefore.frozen_for_energy ||
+                    !accountBefore.frozen_for_energy.frozen_balance
                         ? 0
-                        : accountBefore.account_resource.frozen_balance_for_energy.frozen_balance) + 10e5,
-                    accountAfter.account_resource.frozen_balance_for_energy.frozen_balance
+                        : accountBefore.frozen_for_energy.frozen_balance) + 1e8,
+                    accountAfter.frozen_for_energy.frozen_balance
                 );
             });
 
@@ -802,7 +780,7 @@ describe('McashWeb.mcash', function () {
             let signedTransaction;
 
             before(async function () {
-                transaction = await mcashWeb.transactionBuilder.freezeBalance(10e5, 3, 'BANDWIDTH', accounts.b58[idx]);
+                transaction = await mcashWeb.transactionBuilder.freezeBalance(1e8, 3, 'BANDWIDTH', accounts.b58[idx]);
                 signedTransaction = await mcashWeb.mcash.sign(transaction, accounts.pks[idx]);
             });
 
@@ -844,14 +822,14 @@ describe('McashWeb.mcash', function () {
             before(async function(){
                 this.timeout(10000);
 
-                transaction = await mcashWeb.mcash.freezeBalance(10e5, 3, 'BANDWIDTH', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
+                transaction = await mcashWeb.mcash.freezeBalance(1e8, 3, 'BANDWIDTH', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
                 transaction = transaction.transaction;
-                await waitChainData('tx', transaction.txID);
+                await waitChainData('tx', transaction.tx_id);
             });
 
             it('should get transaction by id', async function () {
-                const tx = await mcashWeb.mcash.getTransaction(transaction.txID);
-                assert.equal(tx.txID, transaction.txID);
+                const tx = await mcashWeb.mcash.getTransaction(transaction.tx_id);
+                assert.equal(tx.tx_id, transaction.tx_id);
             });
 
             it('should throw transaction not found error', async function () {
@@ -873,7 +851,7 @@ describe('McashWeb.mcash', function () {
             before(async function(){
                 this.timeout(10000);
                 // await wait(5); // wait for new clear block generated
-                transaction = await mcashWeb.mcash.freezeBalance(10e5, 3, 'BANDWIDTH', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
+                transaction = await mcashWeb.mcash.freezeBalance(1e8, 3, 'BANDWIDTH', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
                 transaction = transaction.transaction;
                 const currBlock = await mcashWeb.mcash.getBlock('latest');
                 currBlockNum = currBlock.block_header.raw_data.number;
@@ -884,8 +862,8 @@ describe('McashWeb.mcash', function () {
                 for (let i = currBlockNum; i < currBlockNum + 3;) {
                     try {
                         const tx = await mcashWeb.mcash.getTransactionFromBlock(i, 0);
-                        // assert.equal(tx.txID, transaction.txID);
-                        assert.isDefined(tx.txID);
+                        // assert.equal(tx.tx_id, transaction.tx_id);
+                        assert.isDefined(tx.tx_id);
                         break;
                     } catch (e) {
                         if (e === 'Transaction not found in block') {
@@ -932,19 +910,19 @@ describe('McashWeb.mcash', function () {
             let transaction;
 
             before(async function(){
-                transaction = await mcashWeb.mcash.freezeBalance(10e5, 3, 'BANDWIDTH', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
+                transaction = await mcashWeb.mcash.freezeBalance(1e8, 3, 'BANDWIDTH', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
                 transaction = transaction.transaction;
             });
 
             it('should get transaction info by id', async function () {
                 this.timeout(20000);
                 while (true) {
-                    const tx = await mcashWeb.mcash.getTransactionInfo(transaction.txID);
+                    const tx = await mcashWeb.mcash.getTransactionInfo(transaction.tx_id);
                     if (Object.keys(tx).length === 0) {
                         await wait(3);
                         continue;
                     } else {
-                        assert.equal(tx.id, transaction.txID);
+                        assert.equal(tx.id, transaction.tx_id);
                         break;
                     }
                 }
@@ -959,15 +937,15 @@ describe('McashWeb.mcash', function () {
             let transaction;
 
             before(async function(){
-                transaction = await mcashWeb.mcash.freezeBalance(10e5, 3, 'BANDWIDTH', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
+                transaction = await mcashWeb.mcash.freezeBalance(1e8, 3, 'BANDWIDTH', { privateKey: accounts.pks[idx], address: accounts.hex[idx] });
             });
 
             it('should get confirmed transaction by tx id', async function () {
                 this.timeout(20000);
                 while (true) {
                     try {
-                        const tx = await mcashWeb.mcash.getConfirmedTransaction(transaction.transaction.txID);
-                        assert.equal(tx.txID, transaction.transaction.txID);
+                        const tx = await mcashWeb.mcash.getConfirmedTransaction(transaction.transaction.tx_id);
+                        assert.equal(tx.tx_id, transaction.transaction.tx_id);
                         break;
                     } catch (e) {
                         if (e === 'Transaction not found') {
@@ -986,14 +964,14 @@ describe('McashWeb.mcash', function () {
     });
 
 
-    // TRC 10 Token Test
+    // M1 Token Test
     describe('#Token Test', function () {
 
         describe("#sendAsset", async function () {
 
             let token;
-            const fromIdx = 27;
-            const toIdx = 28;
+            const fromIdx = 0;
+            const toIdx = 1;
 
             before(async function(){
                 this.timeout(10000);
@@ -1008,7 +986,7 @@ describe('McashWeb.mcash', function () {
             it('should send mcash by to address and verify account balance', async function () {
                 this.timeout(20000);
 
-                const assetBefore = (await mcashWeb.mcash.getUnconfirmedAccount(accounts.hex[toIdx])).assetV2;
+                const assetBefore = (await mcashWeb.mcash.getUnconfirmedAccount(accounts.hex[toIdx])).assets;
                 await waitChainData('tokenById', token[Object.keys(token)[0]]['id']);
                 await mcashWeb.mcash.sendAsset(
                     accounts.hex[toIdx],
@@ -1018,7 +996,7 @@ describe('McashWeb.mcash', function () {
                 );
 
                 await waitChainData('sendToken', accounts.hex[toIdx], !assetBefore ? 0 : assetBefore[0].value);
-                const assetAfter = (await mcashWeb.mcash.getUnconfirmedAccount(accounts.hex[toIdx])).assetV2;
+                const assetAfter = (await mcashWeb.mcash.getUnconfirmedAccount(accounts.hex[toIdx])).assets;
                 assert.equal(!assetBefore ? 0 : assetBefore[0].value, assetAfter[0].value - 10e4);
             });
 
@@ -1076,10 +1054,10 @@ describe('McashWeb.mcash', function () {
         describe("#sendToken", async function () {
 
             let token;
-            const fromIdx = 29;
-            const toIdx = 30;
+            const fromIdx = 40;
+            const toIdx = 41;
 
-            before(async function(){
+            before(async function() {
                 this.timeout(10000);
 
                 const options = getTokenOptions();
@@ -1092,17 +1070,16 @@ describe('McashWeb.mcash', function () {
             it('should send mcash by to address and verify account balance', async function () {
                 this.timeout(10000);
 
-                const assetBefore = (await mcashWeb.mcash.getUnconfirmedAccount(accounts.hex[toIdx])).assetV2;
+                const assetBefore = (await mcashWeb.mcash.getUnconfirmedAccount(accounts.hex[toIdx])).assets;
                 // transfer from account 10 to 11
                 await mcashWeb.mcash.sendToken(
                     accounts.hex[toIdx],
                     10e4,
                     token[Object.keys(token)[0]]['id'],
-                    '',
                     { privateKey: accounts.pks[fromIdx], address: accounts.hex[fromIdx] }
                 );
                 await waitChainData('sendToken', accounts.hex[toIdx], !assetBefore ? 0 : assetBefore[0].value);
-                const assetAfter = (await mcashWeb.mcash.getUnconfirmedAccount(accounts.hex[toIdx])).assetV2;
+                const assetAfter = (await mcashWeb.mcash.getUnconfirmedAccount(accounts.hex[toIdx])).assets;
 
                 assert.equal(!assetBefore ? 0 : assetBefore[0].value, assetAfter[0].value - 10e4);
             });
@@ -1281,152 +1258,152 @@ describe('McashWeb.mcash', function () {
 
 
     // Exchange Test
-    describe('#Exchange Test', function () {
-
-        describe("#listExchanges", async function () {
-
-            const idxS = 33;
-            const idxE = 35;
-            const toIdx = 35;
-
-            before(async function(){
-                this.timeout(20000);
-
-                let tokenNames = [];
-
-                // create token
-                for (let i = idxS; i < idxE; i++) {
-                    const options = getTokenOptions();
-                    const transaction = await mcashWeb.transactionBuilder.createToken(options, accounts.hex[i]);
-                    await broadcaster(null, accounts.pks[i], transaction);
-                    await waitChainData('token', accounts.hex[i]);
-                    const token = await mcashWeb.mcash.getTokensIssuedByAddress(accounts.hex[i]);
-                    await waitChainData('tokenById', token[Object.keys(token)[0]]['id']);
-                    await broadcaster(null, accounts.pks[i], await mcashWeb.transactionBuilder.sendToken(
-                        accounts.hex[toIdx],
-                        10e4,
-                        token[Object.keys(token)[0]]['id'],
-                        token[Object.keys(token)[0]]['owner_address']
-                    ));
-                    await waitChainData('sendToken', accounts.hex[toIdx], 0);
-                    tokenNames.push(token[Object.keys(token)[0]]['id']);
-                }
-                await broadcaster(
-                    null,
-                    accounts.pks[toIdx],
-                    await mcashWeb.transactionBuilder.createTokenExchange(tokenNames[0], 10e3, tokenNames[1], 10e3, accounts.hex[toIdx])
-                );
-
-            });
-
-            it('should get exchange by id', async function () {
-                const exchanges = await mcashWeb.mcash.listExchanges();
-                assert.isArray(exchanges);
-                for (let exchange of exchanges) {
-                    assert.isDefined(exchange.exchange_id);
-                }
-            });
-
-        });
-
-
-        describe("#listExchangesPaginated", async function () {
-
-            const idxS = 36;
-            const idxE = 38;
-            const toIdx = 38;
-
-            before(async function(){
-                this.timeout(20000);
-
-                let tokenNames = [];
-
-                // create token
-                for (let i = idxS; i < idxE; i++) {
-                    const options = getTokenOptions();
-                    const transaction = await mcashWeb.transactionBuilder.createToken(options, accounts.hex[i]);
-                    await broadcaster(null, accounts.pks[i], transaction);
-                    await waitChainData('token', accounts.hex[i]);
-                    const token = await mcashWeb.mcash.getTokensIssuedByAddress(accounts.hex[i]);
-                    await waitChainData('tokenById', token[Object.keys(token)[0]]['id']);
-                    await broadcaster(null, accounts.pks[i], await mcashWeb.transactionBuilder.sendToken(
-                        accounts.hex[toIdx],
-                        10e4,
-                        token[Object.keys(token)[0]]['id'],
-                        token[Object.keys(token)[0]]['owner_address']
-                    ));
-                    await waitChainData('sendToken', accounts.hex[toIdx], 0);
-                    tokenNames.push(token[Object.keys(token)[0]]['id']);
-                }
-
-                await broadcaster(
-                    null,
-                    accounts.pks[toIdx],
-                    await mcashWeb.transactionBuilder.createTokenExchange(tokenNames[0], 10e3, tokenNames[1], 10e3, accounts.hex[toIdx])
-                );
-
-            });
-
-            it('should get exchange by id', async function () {
-                const exchanges = await mcashWeb.mcash.listExchangesPaginated(10, 0);
-                assert.isArray(exchanges);
-                assert.isTrue(exchanges.length > 0);
-                for (let exchange of exchanges) {
-                    assert.isDefined(exchange.exchange_id);
-                }
-            });
-
-        });
-
-
-        describe("#getExchangeByID", async function () {
-
-            const idxS = 39;
-            const idxE = 41;
-            const toIdx = 41;
-            let exchanges;
-
-            before(async function(){
-                this.timeout(20000);
-
-                let tokenNames = [];
-
-                // create token
-                for (let i = idxS; i < idxE; i++) {
-                    const options = getTokenOptions();
-                    await broadcaster(null, accounts.pks[i], await mcashWeb.transactionBuilder.createToken(options, accounts.hex[i]));
-                    await waitChainData('token', accounts.hex[i]);
-                    const token = await mcashWeb.mcash.getTokensIssuedByAddress(accounts.hex[i]);
-                    await waitChainData('tokenById', token[Object.keys(token)[0]]['id']);
-                    await broadcaster(null, accounts.pks[i], await mcashWeb.transactionBuilder.sendToken(
-                        accounts.hex[toIdx],
-                        10e4,
-                        token[Object.keys(token)[0]]['id'],
-                        token[Object.keys(token)[0]]['owner_address']
-                    ));
-                    await waitChainData('sendToken', accounts.hex[toIdx], 0);
-                    tokenNames.push(token[Object.keys(token)[0]]['id']);
-                }
-
-                await broadcaster(
-                    null,
-                    accounts.pks[toIdx],
-                    await mcashWeb.transactionBuilder.createTokenExchange(tokenNames[0], 10e3, tokenNames[1], 10e3, accounts.hex[toIdx])
-                );
-
-                exchanges = await mcashWeb.mcash.listExchanges();
-            });
-
-            it('should get exchange by id', async function () {
-                for (let exchange of exchanges) {
-                    const ex = await mcashWeb.mcash.getExchangeByID(exchange.exchange_id);
-                    assert.equal(ex.exchange_id, exchange.exchange_id);
-                }
-            });
-
-        });
-
-    });
+    // describe('#Exchange Test', function () {
+    //
+    //     describe("#listExchanges", async function () {
+    //
+    //         const idxS = 33;
+    //         const idxE = 35;
+    //         const toIdx = 35;
+    //
+    //         before(async function(){
+    //             this.timeout(20000);
+    //
+    //             let tokenNames = [];
+    //
+    //             // create token
+    //             for (let i = idxS; i < idxE; i++) {
+    //                 const options = getTokenOptions();
+    //                 const transaction = await mcashWeb.transactionBuilder.createToken(options, accounts.hex[i]);
+    //                 await broadcaster(null, accounts.pks[i], transaction);
+    //                 await waitChainData('token', accounts.hex[i]);
+    //                 const token = await mcashWeb.mcash.getTokensIssuedByAddress(accounts.hex[i]);
+    //                 await waitChainData('tokenById', token[Object.keys(token)[0]]['id']);
+    //                 await broadcaster(null, accounts.pks[i], await mcashWeb.transactionBuilder.sendToken(
+    //                     accounts.hex[toIdx],
+    //                     10e4,
+    //                     token[Object.keys(token)[0]]['id'],
+    //                     token[Object.keys(token)[0]]['owner_address']
+    //                 ));
+    //                 await waitChainData('sendToken', accounts.hex[toIdx], 0);
+    //                 tokenNames.push(token[Object.keys(token)[0]]['id']);
+    //             }
+    //             await broadcaster(
+    //                 null,
+    //                 accounts.pks[toIdx],
+    //                 await mcashWeb.transactionBuilder.createTokenExchange(tokenNames[0], 10e3, tokenNames[1], 10e3, accounts.hex[toIdx])
+    //             );
+    //
+    //         });
+    //
+    //         it('should get exchange by id', async function () {
+    //             const exchanges = await mcashWeb.mcash.listExchanges();
+    //             assert.isArray(exchanges);
+    //             for (let exchange of exchanges) {
+    //                 assert.isDefined(exchange.exchange_id);
+    //             }
+    //         });
+    //
+    //     });
+    //
+    //
+    //     describe("#listExchangesPaginated", async function () {
+    //
+    //         const idxS = 36;
+    //         const idxE = 38;
+    //         const toIdx = 38;
+    //
+    //         before(async function(){
+    //             this.timeout(20000);
+    //
+    //             let tokenNames = [];
+    //
+    //             // create token
+    //             for (let i = idxS; i < idxE; i++) {
+    //                 const options = getTokenOptions();
+    //                 const transaction = await mcashWeb.transactionBuilder.createToken(options, accounts.hex[i]);
+    //                 await broadcaster(null, accounts.pks[i], transaction);
+    //                 await waitChainData('token', accounts.hex[i]);
+    //                 const token = await mcashWeb.mcash.getTokensIssuedByAddress(accounts.hex[i]);
+    //                 await waitChainData('tokenById', token[Object.keys(token)[0]]['id']);
+    //                 await broadcaster(null, accounts.pks[i], await mcashWeb.transactionBuilder.sendToken(
+    //                     accounts.hex[toIdx],
+    //                     10e4,
+    //                     token[Object.keys(token)[0]]['id'],
+    //                     token[Object.keys(token)[0]]['owner_address']
+    //                 ));
+    //                 await waitChainData('sendToken', accounts.hex[toIdx], 0);
+    //                 tokenNames.push(token[Object.keys(token)[0]]['id']);
+    //             }
+    //
+    //             await broadcaster(
+    //                 null,
+    //                 accounts.pks[toIdx],
+    //                 await mcashWeb.transactionBuilder.createTokenExchange(tokenNames[0], 10e3, tokenNames[1], 10e3, accounts.hex[toIdx])
+    //             );
+    //
+    //         });
+    //
+    //         it('should get exchange by id', async function () {
+    //             const exchanges = await mcashWeb.mcash.listExchangesPaginated(10, 0);
+    //             assert.isArray(exchanges);
+    //             assert.isTrue(exchanges.length > 0);
+    //             for (let exchange of exchanges) {
+    //                 assert.isDefined(exchange.exchange_id);
+    //             }
+    //         });
+    //
+    //     });
+    //
+    //
+    //     describe("#getExchangeByID", async function () {
+    //
+    //         const idxS = 39;
+    //         const idxE = 41;
+    //         const toIdx = 41;
+    //         let exchanges;
+    //
+    //         before(async function(){
+    //             this.timeout(20000);
+    //
+    //             let tokenNames = [];
+    //
+    //             // create token
+    //             for (let i = idxS; i < idxE; i++) {
+    //                 const options = getTokenOptions();
+    //                 await broadcaster(null, accounts.pks[i], await mcashWeb.transactionBuilder.createToken(options, accounts.hex[i]));
+    //                 await waitChainData('token', accounts.hex[i]);
+    //                 const token = await mcashWeb.mcash.getTokensIssuedByAddress(accounts.hex[i]);
+    //                 await waitChainData('tokenById', token[Object.keys(token)[0]]['id']);
+    //                 await broadcaster(null, accounts.pks[i], await mcashWeb.transactionBuilder.sendToken(
+    //                     accounts.hex[toIdx],
+    //                     10e4,
+    //                     token[Object.keys(token)[0]]['id'],
+    //                     token[Object.keys(token)[0]]['owner_address']
+    //                 ));
+    //                 await waitChainData('sendToken', accounts.hex[toIdx], 0);
+    //                 tokenNames.push(token[Object.keys(token)[0]]['id']);
+    //             }
+    //
+    //             await broadcaster(
+    //                 null,
+    //                 accounts.pks[toIdx],
+    //                 await mcashWeb.transactionBuilder.createTokenExchange(tokenNames[0], 10e3, tokenNames[1], 10e3, accounts.hex[toIdx])
+    //             );
+    //
+    //             exchanges = await mcashWeb.mcash.listExchanges();
+    //         });
+    //
+    //         it('should get exchange by id', async function () {
+    //             for (let exchange of exchanges) {
+    //                 const ex = await mcashWeb.mcash.getExchangeByID(exchange.exchange_id);
+    //                 assert.equal(ex.exchange_id, exchange.exchange_id);
+    //             }
+    //         });
+    //
+    //     });
+    //
+    // });
 
 
     // Proposal Test
@@ -1452,8 +1429,8 @@ describe('McashWeb.mcash', function () {
                 let parameters = [{"key": 0, "value": 100000}, {"key": 1, "value": 2}]
                 await broadcaster(
                     null,
-                    PRIVATE_KEY,
-                    await mcashWeb.transactionBuilder.createProposal(parameters[0], ADDRESS_BASE58)
+                    PRIVATE_KEY_FOUNDATION,
+                    await mcashWeb.transactionBuilder.createProposal(parameters[0], ADDRESS_FOUNDATION)
                 );
 
                 proposals = await mcashWeb.mcash.listProposals();
@@ -1466,7 +1443,7 @@ describe('McashWeb.mcash', function () {
                 }
             });
 
-            it('should throw invalid proposalID provided error', async function () {
+            it('should throw invalid proposal id provided error', async function () {
                 await assertThrow(
                     mcashWeb.mcash.getProposal(-1),
                     'Invalid proposalID provided'
@@ -1484,8 +1461,8 @@ describe('McashWeb.mcash', function () {
                     let parameters = [{"key": i + 1, "value": 100000}, {"key": i + 2, "value": 2}]
                     await broadcaster(
                         null,
-                        PRIVATE_KEY,
-                        await mcashWeb.transactionBuilder.createProposal(parameters[0], ADDRESS_BASE58)
+                        PRIVATE_KEY_FOUNDATION,
+                        await mcashWeb.transactionBuilder.createProposal(parameters[0], ADDRESS_FOUNDATION)
                     );
                 }
             });
@@ -1534,7 +1511,7 @@ describe('McashWeb.mcash', function () {
 
         it('should throw contract does not exist error', async function () {
             await assertThrow(
-                mcashWeb.mcash.getContract('417cbcc41052b59584d1ac9fc1ce39106533aa1d40'),
+                mcashWeb.mcash.getContract('327cbcc41052b59584d1ac9fc1ce39106533aa1d40'),
                 'Contract does not exist'
             );
         });
@@ -1554,15 +1531,15 @@ describe('McashWeb.mcash', function () {
 
 
     // SR Test
-    describe("#listSuperRepresentatives", async function () {
+    describe("#listSuperNodes", async function () {
 
-        it('should list super representatives', async function () {
+        it('should list super nodes', async function () {
             const srs = await mcashWeb.mcash.listSuperRepresentatives();
             assert.isArray(srs);
             for (let sr of srs) {
                 assert.isDefined(sr.address);
-                assert.isDefined(sr.voteCount);
-                assert.isDefined(sr.latestBlockNum);
+                assert.isDefined(sr.vote_count);
+                assert.isDefined(sr.latest_block_num);
             }
         });
 

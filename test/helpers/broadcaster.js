@@ -12,4 +12,4 @@ module.exports = async function (func, pk, transaction) {
         receipt: await mcashWeb.mcash.sendRawTransaction(signedTransaction)
     };
     return Promise.resolve(result);
-}
+};

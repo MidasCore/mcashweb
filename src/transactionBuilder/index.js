@@ -1,8 +1,8 @@
-import McashWeb from 'index';
-import utils from 'utils';
-import {AbiCoder} from 'utils/ethersUtils';
-import Validator from 'paramValidator';
-import {ADDRESS_PREFIX_REGEX} from 'utils/address';
+import McashWeb from '../index';
+import utils from '../utils';
+import {AbiCoder} from '../utils/ethersUtils';
+import Validator from '../paramValidator';
+import {ADDRESS_PREFIX_REGEX} from '../utils/address';
 
 let self;
 
@@ -208,7 +208,7 @@ export default class TransactionBuilder {
         this.mcashWeb.fullNode.request('wallet/participateassetissue', {
             to_address: toHex(issuerAddress),
             owner_address: toHex(buyer),
-            asset_id: tokenId,
+            asset_id: parseInt(tokenId),
             amount: amount
         }, 'post').then(transaction => resultManager(transaction, callback)).catch(err => callback(err));
     }

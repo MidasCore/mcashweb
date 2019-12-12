@@ -8,7 +8,8 @@ const jlog = require('../helpers/jlog')
 
 const assert = chai.assert;
 
-describe('McashWeb.lib.plugin', async function () {
+// TODO
+describe.skip('McashWeb.lib.plugin', async function () {
 
     let mcashWeb;
 
@@ -29,19 +30,19 @@ describe('McashWeb.lib.plugin', async function () {
 
         it('should register the plugin GetNowBlock', async function () {
 
-            const someParameter = 'someValue'
+            const someParameter = 'someValue';
 
             let result = mcashWeb.plugin.register(GetNowBlock, {
                 someParameter
-            })
-            assert.isTrue(result.skipped.includes('_parseToken'))
-            assert.isTrue(result.plugged.includes('getCurrentBlock'))
-            assert.isTrue(result.plugged.includes('getLatestBlock'))
+            });
+            assert.isTrue(result.skipped.includes('_parseToken'));
+            assert.isTrue(result.plugged.includes('getCurrentBlock'));
+            assert.isTrue(result.plugged.includes('getLatestBlock'));
 
-            result = await mcashWeb.mcash.getCurrentBlock()
-            assert.isTrue(result.fromPlugin)
+            result = await mcashWeb.mcash.getCurrentBlock();
+            assert.isTrue(result.fromPlugin);
 
-            result = await mcashWeb.mcash.getSomeParameter()
+            result = await mcashWeb.mcash.getSomeParameter();
             assert.equal(result, someParameter)
 
         })

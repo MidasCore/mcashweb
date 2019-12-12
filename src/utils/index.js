@@ -7,7 +7,7 @@ import * as abi from './abi';
 
 import validator from 'validator';
 import BigNumber from 'bignumber.js';
-import {ADDRESS_PREFIX} from 'utils/address';
+import {ADDRESS_PREFIX} from './address';
 
 const utils = {
     isValidURL(url) {

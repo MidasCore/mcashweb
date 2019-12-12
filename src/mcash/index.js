@@ -1,7 +1,7 @@
-import McashWeb from 'index';
-import utils from 'utils';
-import {keccak256, toUtf8Bytes, recoverAddress, SigningKey} from 'utils/ethersUtils';
-import {ADDRESS_PREFIX} from 'utils/address';
+import McashWeb from '../index';
+import utils from '../utils';
+import {keccak256, toUtf8Bytes, recoverAddress, SigningKey} from '../utils/ethersUtils';
+import {ADDRESS_PREFIX} from '../utils/address';
 
 const MCASH_MESSAGE_HEADER = '\x19MCASH Signed Message:\n32';
 const ETH_MESSAGE_HEADER = '\x19Ethereum Signed Message:\n32';
@@ -172,7 +172,7 @@ export default class Mcash {
         if (!callback)
             return this.injectPromise(this.getTransactionInfo, transactionID);
 
-        this.mcashWeb.solidityNode.request('wallet/gettransactioninfobyid', {
+        this.mcashWeb.fullNode.request('wallet/gettransactioninfobyid', {
             value: transactionID
         }, 'post').then(transaction => {
             callback(null, transaction);
@@ -368,27 +368,6 @@ export default class Mcash {
 
         this.getUnconfirmedAccount(address).then(({balance = 0}) => {
             callback(null, balance);
-        }).catch(err => callback(err));
-    }
-
-    getBandwidth(address = this.mcashWeb.defaultAddress.hex, callback = false) {
-        if (utils.isFunction(address)) {
-            callback = address;
-            address = this.mcashWeb.defaultAddress.hex;
-        }
-
-        if (!callback)
-            return this.injectPromise(this.getBandwidth, address);
-
-        if (!this.mcashWeb.isAddress(address))
-            return callback('Invalid address provided');
-
-        address = this.mcashWeb.address.toHex(address);
-
-        this.mcashWeb.fullNode.request('wallet/getaccountnet', {
-            address
-        }, 'post').then(({free_bandwidth_used = 0, free_bandwidth_limit = 0, bandwidth_used = 0, bandwidth_limit = 0}) => {
-            callback(null, (free_bandwidth_limit - free_bandwidth_used) + (bandwidth_limit - bandwidth_used));
         }).catch(err => callback(err));
     }
 

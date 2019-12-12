@@ -1,5 +1,5 @@
-import utils from 'utils';
-import {ADDRESS_PREFIX_REGEX} from 'utils/address';
+import utils from '../utils';
+import {ADDRESS_PREFIX_REGEX} from '../utils/address';
 
 const getFunctionSelector = abi => {
     return abi.name + '(' + getParamTypes(abi.inputs || []).join(',') + ')';
@@ -194,8 +194,10 @@ export default class Method {
                 this.mcashWeb.address.toHex(address)
             );
 
-            if (!transaction.result || !transaction.result.result)
+            if (!transaction.result || !transaction.result.result) {
+                console.error('Unknown error: ' + JSON.stringify(transaction, null, 2));
                 return callback('Unknown error: ' + JSON.stringify(transaction, null, 2));
+            }
 
             // If privateKey is false, this won't be signed here. We assume sign functionality will be replaced.
             const signedTransaction = await this.mcashWeb.mcash.sign(transaction.transaction, privateKey);
@@ -226,7 +228,7 @@ export default class Method {
                     });
                 }
 
-                const output = await this.mcashWeb.mcash.getConfirmedTransactionInfo(signedTransaction.tx_id);
+                const output = await this.mcashWeb.mcash.getTransactionInfo(signedTransaction.tx_id);
 
                 if (!Object.keys(output).length) {
                     return setTimeout(() => {

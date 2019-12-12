@@ -1,5 +1,5 @@
-import McashWeb from 'index';
-import utils from 'utils';
+import McashWeb from '../index';
+import utils from '../utils';
 import providers from "../providers";
 import querystring from "querystring";
 
