@@ -1,5 +1,5 @@
 import axios from 'axios';
-import utils from 'utils';
+import utils from '../utils';
 
 export default class HttpProvider {
     constructor(host, timeout = 30000, user = false, password = false, headers = {}, statusPage = '/') {
@@ -26,8 +26,8 @@ export default class HttpProvider {
             timeout: timeout,
             headers: headers,
             auth: user && {
-                user,
-                password
+                username: user,
+                password: password
             },
         });
     }
@@ -44,10 +44,9 @@ export default class HttpProvider {
 
     request(url, payload = {}, method = 'get') {
         method = method.toLowerCase();
-
         return this.instance.request({
-            data: method == 'post' && Object.keys(payload).length ? payload : null,
-            params: method == 'get' && payload,
+            data: method === 'post' && Object.keys(payload).length ? payload : null,
+            params: method === 'get' && payload,
             url,
             method
         }).then(({data}) => data);

@@ -13,16 +13,16 @@ export function bin2String(array) {
 }
 
 export function arrayEquals(array1, array2, strict) {
-    if (array1.length != array2.length)
+    if (array1.length !== array2.length)
         return false;
 
     let i;
 
     for (i = 0; i < array1.length; i++) {
         if (strict) {
-            if (array1[i] != array2[i])
+            if (array1[i] !== array2[i])
                 return false;
-        } else if (JSON.stringify(array1[i]) != JSON.stringify(array2[i]))
+        } else if (JSON.stringify(array1[i]) !== JSON.stringify(array2[i]))
             return false;
     }
 
@@ -34,7 +34,7 @@ export function stringToBytes(str) {
     if (typeof str !== 'string')
         throw new Error('The passed string is not a string')
 
-    const bytes = new Array();
+    const bytes = [];
     let len;
     let c;
 
@@ -159,7 +159,7 @@ export function getStringType(str) {
     if (typeof (str) != 'string')
         return -1;
 
-    if (str.length == 0 || str == "")
+    if (str.length === 0 || str === "")
         return -1;
 
     let i = 0;
@@ -173,30 +173,30 @@ export function getStringType(str) {
     //             break;
     //     }
     // } else
-    if (str.length == 40) {
+    if (str.length === 40) {
         for (; i < 40; i++) {
-            var c = str.charAt(i);
+            let c = str.charAt(i);
 
             if (!isHexChar(c))
                 break;
         }
     }
 
-    if (i == 40)
+    if (i === 40)
         return 1; //40 Hex, Address
 
     for (i = 0; i < str.length; i++) {
-        var c = str.charAt(i);
+        let c = str.charAt(i);
 
         if (!isNumber(c))
             break;
     }
 
-    if (i == str.length)
+    if (i === str.length)
         return 2; // All Decimal number, BlockNumber
 
     for (i = 0; i < str.length; i++) {
-        var c = str.charAt(i);
+        let c = str.charAt(i);
 
         if (c > ' ')
             return 3; // At least one visible character

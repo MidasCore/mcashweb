@@ -1,11 +1,9 @@
 const chai = require('chai');
 const assert = chai.assert;
 const txPars = require('../helpers/txPars');
-const jlog = require('../helpers/jlog');
 const assertThrow = require('../helpers/assertThrow');
 const wait = require('../helpers/wait');
 const broadcaster = require('../helpers/broadcaster');
-const pollAccountFor = require('../helpers/pollAccountFor');
 const _ = require('lodash');
 const mcashWebBuilder = require('../helpers/mcashWebBuilder');
 const assertEqualHex = require('../helpers/assertEqualHex');
@@ -14,11 +12,11 @@ const testRevertContract = require('../fixtures/contracts').testRevert;
 const McashWeb = mcashWebBuilder.McashWeb;
 const {
     ADDRESS_HEX,
-    ADDRESS_BASE58,
+    ADDRESS_FOUNDATION,
+    ADDRESS_FOUNDATION_HEX,
     UPDATED_TEST_TOKEN_OPTIONS,
-    PRIVATE_KEY,
-    getTokenOptions,
-    isProposalApproved
+    PRIVATE_KEY_FOUNDATION,
+    getTokenOptions
 } = require('../helpers/config');
 
 describe('McashWeb.transactionBuilder', function () {
@@ -26,14 +24,12 @@ describe('McashWeb.transactionBuilder', function () {
     let accounts;
     let mcashWeb;
     let emptyAccount;
-    let isAllowSameTokenNameApproved
 
     before(async function () {
         mcashWeb = mcashWebBuilder.createInstance();
-        // ALERT this works only with Tron Quickstart:
-        accounts = await mcashWebBuilder.getTestAccounts(-1);
+        // ALERT this works only with Mcash quick start:
+        accounts = await mcashWebBuilder.getTestAccounts();
         emptyAccount = await McashWeb.createAccount();
-        isAllowSameTokenNameApproved = await isProposalApproved(mcashWeb, 'getAllowSameTokenName')
     });
 
     describe('#constructor()', function () {
@@ -45,26 +41,26 @@ describe('McashWeb.transactionBuilder', function () {
 
     });
 
-    describe('#sendTrx()', function () {
+    describe('#sendMcash()', function () {
 
-        it(`should send 10 trx from default address to accounts[1]`, async function () {
+        it(`should send 10 matoshi from default address to accounts[1]`, async function () {
             const transaction = await mcashWeb.transactionBuilder.sendMcash(accounts.b58[1], 10);
 
             const parameter = txPars(transaction);
 
-            assert.equal(transaction.txID.length, 64);
+            assert.equal(transaction.tx_id.length, 64);
             assert.equal(parameter.value.amount, 10);
             assert.equal(parameter.value.owner_address, ADDRESS_HEX);
             assert.equal(parameter.value.to_address, accounts.hex[1]);
             assert.equal(parameter.type_url, 'type.googleapis.com/protocol.TransferContract');
         });
 
-        it(`should send 10 trx from accounts[0] to accounts[1]`, async function () {
+        it(`should send 10 matoshi from accounts[0] to accounts[1]`, async function () {
             const transaction = await mcashWeb.transactionBuilder.sendMcash(accounts.b58[1], 10, accounts.b58[0]);
 
             const parameter = txPars(transaction);
 
-            assert.equal(transaction.txID.length, 64);
+            assert.equal(transaction.tx_id.length, 64);
             assert.equal(parameter.value.amount, 10);
             assert.equal(parameter.value.owner_address, accounts.hex[0]);
             assert.equal(parameter.value.to_address, accounts.hex[1]);
@@ -103,7 +99,7 @@ describe('McashWeb.transactionBuilder', function () {
 
             await assertThrow(
                 mcashWeb.transactionBuilder.sendMcash(accounts.hex[3], 10, accounts.hex[3]),
-                'Cannot transfer TRX to the same account'
+                'Cannot transfer MCASH to the same account'
             );
 
         });
@@ -129,7 +125,7 @@ describe('McashWeb.transactionBuilder', function () {
 
             const transaction = await mcashWeb.transactionBuilder.createToken(options, accounts.b58[2]);
             const parameter = txPars(transaction);
-            assert.equal(transaction.txID.length, 64);
+            assert.equal(transaction.tx_id.length, 64);
             assert.equal(parameter.value.total_supply, options.totalSupply);
             await assertEqualHex(parameter.value.abbr, options.abbreviation);
             assert.equal(parameter.value.owner_address, accounts.hex[2]);
@@ -137,43 +133,37 @@ describe('McashWeb.transactionBuilder', function () {
         });
 
             it(`should allow accounts[8] to create a TestToken with voteScore and precision`, async function () {
-                if (isAllowSameTokenNameApproved) {
+                const options = getTokenOptions();
+                options.voteScore = 5;
+                options.precision = 4;
 
-                    const options = getTokenOptions();
-                    options.voteScore = 5;
-                    options.precision = 4;
+                const transaction = await mcashWeb.transactionBuilder.createToken(options, accounts.b58[8]);
 
-                    const transaction = await mcashWeb.transactionBuilder.createToken(options, accounts.b58[8]);
+                const parameter = txPars(transaction);
+                assert.equal(transaction.tx_id.length, 64);
+                assert.equal(parameter.value.vote_score, options.voteScore);
+                assert.equal(parameter.value.precision, options.precision);
+                assert.equal(parameter.value.total_supply, options.totalSupply);
+                await assertEqualHex(parameter.value.abbr, options.abbreviation);
+                assert.equal(parameter.value.owner_address, accounts.hex[8]);
+                assert.equal(parameter.type_url, 'type.googleapis.com/protocol.AssetIssueContract');
 
-                    const parameter = txPars(transaction);
-                    assert.equal(transaction.txID.length, 64);
-                    assert.equal(parameter.value.vote_score, options.voteScore);
-                    assert.equal(parameter.value.precision, options.precision);
-                    assert.equal(parameter.value.total_supply, options.totalSupply);
-                    await assertEqualHex(parameter.value.abbr, options.abbreviation);
-                    assert.equal(parameter.value.owner_address, accounts.hex[8]);
-                    assert.equal(parameter.type_url, 'type.googleapis.com/protocol.AssetIssueContract');
+                await broadcaster(null, accounts.pks[8], transaction);
 
-                    await broadcaster(null, accounts.pks[8], transaction)
+                const tokenList = await mcashWeb.mcash.getTokensIssuedByAddress(accounts.b58[8]);
+                const tokenId = tokenList[options.name].id;
+                const token = await mcashWeb.mcash.getTokenById(tokenId);
 
-                    const tokenList = await mcashWeb.mcashgetTokensIssuedByAddress(accounts.b58[8])
-                    const tokenID = tokenList[options.name].id
-                    const token = await mcashWeb.mcashgetTokenByID(tokenID)
-
-                    assert.equal(token.vote_score, options.voteScore);
-                    assert.equal(token.precision, options.precision);
-
-                } else {
-                    this.skip()
-                }
+                assert.equal(token.vote_score, options.voteScore);
+                assert.equal(token.precision, options.precision);
             });
 
         it(`should create a TestToken passing any number as a string`, async function () {
             const options = getTokenOptions();
-            options.totalSupply = '100'
-            options.frozenAmount = '5'
-            options.frozenDuration = '2'
-            options.saleEnd = options.saleEnd.toString()
+            options.totalSupply = 100;
+            options.frozenAmount = 5;
+            options.frozenDuration = 2;
+            // options.saleEnd = options.saleEnd;
             const transaction = await mcashWeb.transactionBuilder.createToken(options);
             const parameter = txPars(transaction);
             await assertEqualHex(parameter.value.abbr, options.abbreviation);
@@ -215,14 +205,14 @@ describe('McashWeb.transactionBuilder', function () {
 
         });
 
-        it('should throw if TRX ratio is not a positive integer', async function () {
+        it('should throw if Mcash ratio is not a positive integer', async function () {
 
             const options = getTokenOptions();
-            options.trxRatio = {};
+            options.mcashRatio = {};
 
             await assertThrow(
                 mcashWeb.transactionBuilder.createToken(options),
-                'TRX ratio must be a positive integer'
+                'MCASH ratio must be a positive integer'
             );
 
         });
@@ -410,7 +400,7 @@ describe('McashWeb.transactionBuilder', function () {
                 const options = getTokenOptions();
                 const transaction = await mcashWeb.transactionBuilder.createAsset(options, accounts.b58[2]);
                 const parameter = txPars(transaction);
-                assert.equal(transaction.txID.length, 64);
+                assert.equal(transaction.tx_id.length, 64);
                 assert.equal(parameter.value.total_supply, options.totalSupply);
                 await assertEqualHex(parameter.value.abbr, options.abbreviation);
                 assert.equal(parameter.value.owner_address, accounts.hex[2]);
@@ -428,7 +418,7 @@ describe('McashWeb.transactionBuilder', function () {
             const transaction = await mcashWeb.transactionBuilder.updateAccount(newName, accounts.b58[3]);
             const parameter = txPars(transaction);
 
-            assert.equal(transaction.txID.length, 64);
+            assert.equal(transaction.tx_id.length, 64);
             await assertEqualHex(parameter.value.account_name, newName);
             assert.equal(parameter.value.owner_address, accounts.hex[3]);
             assert.equal(parameter.type_url, 'type.googleapis.com/protocol.AccountUpdateContract');
@@ -456,31 +446,27 @@ describe('McashWeb.transactionBuilder', function () {
 
     describe('#updateToken()', function () {
 
-        let tokenOptions
-        let tokenID
+        let tokenOptions;
+        let tokenId;
 
         before(async function () {
 
-            this.timeout(10000)
+            this.timeout(10000);
 
             tokenOptions = getTokenOptions();
-            await broadcaster(mcashWeb.transactionBuilder.createToken(tokenOptions, accounts.b58[2]), accounts.pks[2])
+            await broadcaster(mcashWeb.transactionBuilder.createToken(tokenOptions, accounts.b58[2]), accounts.pks[2]);
 
-            let tokenList
+            let tokenList;
             while (!tokenList) {
-                tokenList = await mcashWeb.mcashgetTokensIssuedByAddress(accounts.b58[2])
+                tokenList = await mcashWeb.mcash.getTokensIssuedByAddress(accounts.b58[2]);
             }
-            if(isAllowSameTokenNameApproved) {
-                tokenID = tokenList[tokenOptions.name].id
-            } else {
-                tokenID = tokenList[tokenOptions.name].name
-            }
+            tokenId = tokenList[tokenOptions.name].id;
         });
 
         it(`should allow accounts[2] to update a TestToken`, async function () {
             const transaction = await mcashWeb.transactionBuilder.updateToken(UPDATED_TEST_TOKEN_OPTIONS, accounts.b58[2]);
             const parameter = txPars(transaction);
-            assert.equal(transaction.txID.length, 64);
+            assert.equal(transaction.tx_id.length, 64);
             await assertEqualHex(parameter.value.description, UPDATED_TEST_TOKEN_OPTIONS.description);
             await assertEqualHex(parameter.value.url, UPDATED_TEST_TOKEN_OPTIONS.url);
             assert.equal(parameter.value.owner_address, accounts.hex[2]);
@@ -585,7 +571,7 @@ describe('McashWeb.transactionBuilder', function () {
             it(`should allow accounts[2] to update a TestToken`, async function () {
                 const transaction = await mcashWeb.transactionBuilder.updateAsset(UPDATED_TEST_TOKEN_OPTIONS, accounts.b58[2]);
                 const parameter = txPars(transaction);
-                assert.equal(transaction.txID.length, 64);
+                assert.equal(transaction.tx_id.length, 64);
                 await assertEqualHex(parameter.value.description, UPDATED_TEST_TOKEN_OPTIONS.description);
                 await assertEqualHex(parameter.value.url, UPDATED_TEST_TOKEN_OPTIONS.url);
                 assert.equal(parameter.value.owner_address, accounts.hex[2]);
@@ -597,51 +583,42 @@ describe('McashWeb.transactionBuilder', function () {
 
     describe('#purchaseToken()', function () {
 
-        let tokenOptions
-        let tokenID
+        let tokenOptions;
+        let tokenId;
 
         before(async function () {
 
-            this.timeout(10000)
+            this.timeout(10000);
 
             tokenOptions = getTokenOptions();
 
-            await broadcaster(mcashWeb.transactionBuilder.createToken(tokenOptions, accounts.b58[5]), accounts.pks[5])
+            await broadcaster(mcashWeb.transactionBuilder.createToken(tokenOptions, accounts.b58[5]), accounts.pks[5]);
 
-            let tokenList
+            let tokenList;
             while (!tokenList) {
-                tokenList = await mcashWeb.mcashgetTokensIssuedByAddress(accounts.b58[5])
+                tokenList = await mcashWeb.mcash.getTokensIssuedByAddress(accounts.b58[5])
             }
-            if(isAllowSameTokenNameApproved) {
-                tokenID = tokenList[tokenOptions.name].id
-            } else {
-                tokenID = tokenList[tokenOptions.name].name
-            }
-            assert.equal(tokenList[tokenOptions.name].abbr, tokenOptions.abbreviation)
+            tokenId = tokenList[tokenOptions.name].id;
+            assert.equal(tokenList[tokenOptions.name].abbr, tokenOptions.abbreviation);
         });
 
         it('should verify that the asset has been created', async function () {
 
-            let token
-            if(isAllowSameTokenNameApproved) {
-                token = await mcashWeb.mcashgetTokenByID(tokenID)
-                assert.equal(token.id, tokenID)
-            } else {
-                token = await mcashWeb.mcashgetTokenFromId(tokenID)
-            }
+            let token;
+            token = await mcashWeb.mcash.getTokenById(tokenId);
             assert.equal(token.name, tokenOptions.name)
-        })
+        });
 
         it(`should allow accounts[2] to purchase a token created by accounts[5]`, async function () {
 
-            this.timeout(10000)
+            this.timeout(10000);
 
-            await wait(4)
+            await wait(4);
 
-            const transaction = await mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], tokenID, 20, accounts.b58[2]);
+            const transaction = await mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], tokenId, 2000000000, accounts.b58[2]);
             const parameter = txPars(transaction);
-            assert.equal(transaction.txID.length, 64);
-            assert.equal(parameter.value.amount, 20);
+            assert.equal(transaction.tx_id.length, 64);
+            assert.equal(parameter.value.amount, 2000000000);
             assert.equal(parameter.value.owner_address, accounts.hex[2]);
             assert.equal(parameter.value.to_address, accounts.hex[5]);
             assert.equal(parameter.type_url, 'type.googleapis.com/protocol.ParticipateAssetIssueContract');
@@ -650,7 +627,7 @@ describe('McashWeb.transactionBuilder', function () {
         it("should throw if issuerAddress is invalid", async function () {
 
             await assertThrow(
-                mcashWeb.transactionBuilder.purchaseToken('sasdsadasfa', tokenID, 20, accounts.b58[2]),
+                mcashWeb.transactionBuilder.purchaseToken('sasdsadasfa', tokenId, 20, accounts.b58[2]),
                 'Invalid issuer address provided'
             )
 
@@ -658,7 +635,7 @@ describe('McashWeb.transactionBuilder', function () {
 
         it("should throw if issuerAddress is not the right one", async function () {
             await assertThrow(
-                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[4], tokenID, 20, accounts.b58[2]),
+                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[4], tokenId, 20, accounts.b58[2]),
                 null,
                 'The asset is not issued by'
             )
@@ -667,7 +644,7 @@ describe('McashWeb.transactionBuilder', function () {
         it("should throw if the token Id is invalid", async function () {
 
             await assertThrow(
-                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], 123432, 20, accounts.b58[2]),
+                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], 'abc', 20, accounts.b58[2]),
                 'Invalid token ID provided'
             )
         });
@@ -675,9 +652,9 @@ describe('McashWeb.transactionBuilder', function () {
         it("should throw if token does not exist", async function () {
 
             await assertThrow(
-                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], '1110000', 20, accounts.b58[2]),
+                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], 1110000, 20, accounts.b58[2]),
                 null,
-                'No asset named '
+                'No asset with id 1110000'
             )
 
         });
@@ -685,7 +662,7 @@ describe('McashWeb.transactionBuilder', function () {
         it("should throw if buyer address is invalid", async function () {
 
             await assertThrow(
-                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], tokenID, 20, 'sasdadasdas'),
+                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], tokenId, 20, 'sasdadasdas'),
                 'Invalid buyer address provided'
             )
 
@@ -694,12 +671,12 @@ describe('McashWeb.transactionBuilder', function () {
         it("should throw if amount is invalid", async function () {
 
             await assertThrow(
-                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], tokenID, -3, accounts.b58[2]),
+                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], tokenId, -3, accounts.b58[2]),
                 'Invalid amount provided'
             )
 
             await assertThrow(
-                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], tokenID, "some-amount", accounts.b58[2]),
+                mcashWeb.transactionBuilder.purchaseToken(accounts.b58[5], tokenId, "some-amount", accounts.b58[2]),
                 'Invalid amount provided'
             )
         });
@@ -707,57 +684,46 @@ describe('McashWeb.transactionBuilder', function () {
 
     describe('#sendToken()', function () {
 
-        let tokenOptions
-        let tokenID
+        let tokenOptions;
+        let tokenId;
 
         before(async function () {
 
-            this.timeout(30000)
+            this.timeout(30000);
 
             tokenOptions = getTokenOptions();
 
-            await broadcaster(mcashWeb.transactionBuilder.createToken(tokenOptions, accounts.b58[6]), accounts.pks[6])
+            await broadcaster(mcashWeb.transactionBuilder.createToken(tokenOptions, accounts.b58[6]), accounts.pks[6]);
 
-            let tokenList
+            let tokenList;
             while (!tokenList) {
-                tokenList = await mcashWeb.mcashgetTokensIssuedByAddress(accounts.b58[6])
+                tokenList = await mcashWeb.mcash.getTokensIssuedByAddress(accounts.b58[6])
             }
-
-            if(isAllowSameTokenNameApproved) {
-                tokenID = tokenList[tokenOptions.name].id
-            } else {
-                tokenID = tokenList[tokenOptions.name].name
-            }
-
+            tokenId = tokenList[tokenOptions.name].id;
         });
 
         it('should verify that the asset has been created', async function () {
-
-            let token
-            if(isAllowSameTokenNameApproved) {
-                token = await mcashWeb.mcashgetTokenByID(tokenID)
-                assert.equal(token.id, tokenID)
-            } else {
-                token = await mcashWeb.mcashgetTokenFromId(tokenID)
-            }
-            assert.equal(token.name, tokenOptions.name)
-        })
+            let token;
+            token = await mcashWeb.mcash.getTokenById(tokenId);
+            assert.equal(token.id, tokenId);
+            assert.equal(token.name, tokenOptions.name);
+        });
 
         it("should allow accounts [7]  to send a token to accounts[1]", async function () {
 
-            this.timeout(10000)
+            this.timeout(10000);
 
-            await wait(4)
+            await wait(4);
 
-            await broadcaster(mcashWeb.transactionBuilder.purchaseToken(accounts.b58[6], tokenID, 50, accounts.b58[7]), accounts.pks[7])
+            await broadcaster(mcashWeb.transactionBuilder.purchaseToken(accounts.b58[6], tokenId, 5000000000, accounts.b58[7]), accounts.pks[7]);
 
-            await wait(1)
+            await wait(1);
 
-            const transaction = await mcashWeb.transactionBuilder.sendToken(accounts.b58[1], 5, tokenID, accounts.b58[7])
+            const transaction = await mcashWeb.transactionBuilder.sendToken(accounts.b58[1], 5, tokenId, accounts.b58[7]);
 
-            const parameter = txPars(transaction)
+            const parameter = txPars(transaction);
 
-            assert.equal(parameter.value.amount, 5)
+            assert.equal(parameter.value.amount, 5);
             assert.equal(parameter.value.owner_address, accounts.hex[7]);
             assert.equal(parameter.value.to_address, accounts.hex[1]);
 
@@ -766,11 +732,11 @@ describe('McashWeb.transactionBuilder', function () {
 
         it("should allow accounts [6]  to send a token to accounts[1]", async function () {
 
-            const transaction = await mcashWeb.transactionBuilder.sendToken(accounts.b58[1], 5, tokenID, accounts.b58[6])
+            const transaction = await mcashWeb.transactionBuilder.sendToken(accounts.b58[1], 5, tokenId, accounts.b58[6])
 
             const parameter = txPars(transaction);
 
-            assert.equal(parameter.value.amount, 5)
+            assert.equal(parameter.value.amount, 5);
             assert.equal(parameter.value.owner_address, accounts.hex[6]);
             assert.equal(parameter.value.to_address, accounts.hex[1]);
 
@@ -779,7 +745,7 @@ describe('McashWeb.transactionBuilder', function () {
         it("should throw if recipient address is invalid", async function () {
 
             await assertThrow(
-                mcashWeb.transactionBuilder.sendToken('sadasfdfsgdfgssa', 5, tokenID, accounts.b58[7]),
+                mcashWeb.transactionBuilder.sendToken('sadasfdfsgdfgssa', 5, tokenId, accounts.b58[7]),
                 'Invalid recipient address provided'
             )
 
@@ -788,15 +754,15 @@ describe('McashWeb.transactionBuilder', function () {
         it("should throw if the token Id is invalid", async function () {
 
             await assertThrow(
-                mcashWeb.transactionBuilder.sendToken(accounts.b58[1], 5, 143234, accounts.b58[7]),
-                'Invalid token ID provided'
+                mcashWeb.transactionBuilder.sendToken(accounts.b58[1], 5, '143234abc', accounts.b58[7]),
+                'Invalid token Id provided'
             )
         });
 
         it("should throw if origin address is invalid", async function () {
 
             await assertThrow(
-                mcashWeb.transactionBuilder.sendToken(accounts.b58[1], 5, tokenID, 213253453453),
+                mcashWeb.transactionBuilder.sendToken(accounts.b58[1], 5, tokenId, 213253453453),
                 'Invalid origin address provided'
             )
 
@@ -805,12 +771,12 @@ describe('McashWeb.transactionBuilder', function () {
         it("should throw if amount is invalid", async function () {
 
             await assertThrow(
-                mcashWeb.transactionBuilder.sendToken(accounts.b58[1], -5, tokenID, accounts.b58[7]),
+                mcashWeb.transactionBuilder.sendToken(accounts.b58[1], -5, tokenId, accounts.b58[7]),
                 'Invalid amount provided'
-            )
+            );
 
             await assertThrow(
-                mcashWeb.transactionBuilder.sendToken(accounts.b58[1], 'amount', tokenID, accounts.b58[7]),
+                mcashWeb.transactionBuilder.sendToken(accounts.b58[1], 'amount', tokenId, accounts.b58[7]),
                 'Invalid amount provided'
             )
         });
@@ -818,50 +784,46 @@ describe('McashWeb.transactionBuilder', function () {
 
     describe("#createProposal", async function () {
 
-        let parameters = [{"key": 0, "value": 100000}, {"key": 1, "value": 2}]
+        let parameters = [{"key": 0, "value": 100000}, {"key": 1, "value": 2}];
 
         it('should allow the SR account to create a new proposal as a single object', async function () {
 
-            const transaction = await mcashWeb.transactionBuilder.createProposal(parameters[0], ADDRESS_BASE58)
+            const transaction = await mcashWeb.transactionBuilder.createProposal(parameters[0], ADDRESS_FOUNDATION);
 
             const parameter = txPars(transaction);
 
-            assert.equal(parameter.value.owner_address, ADDRESS_HEX);
+            assert.equal(parameter.value.owner_address, ADDRESS_FOUNDATION_HEX);
             assert.equal(parameter.value.parameters[0].value, parameters[0].value);
             assert.equal(parameter.type_url, 'type.googleapis.com/protocol.ProposalCreateContract');
 
-        })
+        });
 
         it('should allow the SR account to create a new proposal as an array of objects', async function () {
 
-            const transaction = await mcashWeb.transactionBuilder.createProposal(parameters, ADDRESS_BASE58)
+            const transaction = await mcashWeb.transactionBuilder.createProposal(parameters, ADDRESS_FOUNDATION);
 
             const parameter = txPars(transaction);
 
-            assert.equal(parameter.value.owner_address, ADDRESS_HEX);
+            assert.equal(parameter.value.owner_address, ADDRESS_FOUNDATION_HEX);
             assert.equal(parameter.value.parameters[0].value, parameters[0].value);
             assert.equal(parameter.type_url, 'type.googleapis.com/protocol.ProposalCreateContract');
 
-        })
+        });
 
         it("should throw if issuer address is invalid", async function () {
-
             await assertThrow(
                 mcashWeb.transactionBuilder.createProposal(parameters, 'sadasdsffdgdf'),
                 'Invalid issuer address provided'
             )
-
         });
 
 
         it("should throw if the issuer address is not an SR", async function () {
-
             await assertThrow(
                 mcashWeb.transactionBuilder.createProposal(parameters, accounts.b58[0]),
                 null,
-                `Witness[${accounts.hex[0]}] not exists`
+                `Account ${accounts.hex[0]} does not have right`
             )
-
         });
 
         // TODO Complete throws
@@ -876,43 +838,43 @@ describe('McashWeb.transactionBuilder', function () {
 
         before(async function () {
 
-            this.timeout(20000)
+            this.timeout(20000);
 
-            let parameters = [{"key": 0, "value": 100000}, {"key": 1, "value": 2}]
+            let parameters = [{"key": 0, "value": 100000}, {"key": 1, "value": 2}];
 
-            await broadcaster(mcashWeb.transactionBuilder.createProposal(parameters, ADDRESS_BASE58), PRIVATE_KEY)
+            await broadcaster(mcashWeb.transactionBuilder.createProposal(parameters, ADDRESS_FOUNDATION), PRIVATE_KEY_FOUNDATION);
 
-            proposals = await mcashWeb.mcashlistProposals();
+            proposals = await mcashWeb.mcash.listProposals();
 
-        })
+        });
 
         after(async function () {
-            proposals = await mcashWeb.mcashlistProposals();
+            proposals = await mcashWeb.mcash.listProposals();
             for(let proposal of proposals) {
-                if(proposal.state !== 'CANCELED')
-                    await broadcaster(mcashWeb.transactionBuilder.deleteProposal(proposal.proposal_id), PRIVATE_KEY)
+                if(proposal.state !== 'CANCELED' && proposal.state !== 'DISAPPROVED')
+                    await broadcaster(mcashWeb.transactionBuilder.deleteProposal(proposal.proposal_id, ADDRESS_FOUNDATION), PRIVATE_KEY_FOUNDATION);
             }
-        })
+        });
 
         it('should allow the SR to delete its own proposal', async function () {
 
-            const transaction = await mcashWeb.transactionBuilder.deleteProposal(proposals[0].proposal_id)
+            const transaction = await mcashWeb.transactionBuilder.deleteProposal(proposals[0].proposal_id, ADDRESS_FOUNDATION);
             const parameter = txPars(transaction);
 
-            assert.equal(parameter.value.owner_address, ADDRESS_HEX);
+            assert.equal(parameter.value.owner_address, ADDRESS_FOUNDATION_HEX);
             assert.equal(parameter.value.proposal_id, proposals[0].proposal_id);
             assert.equal(parameter.type_url, 'type.googleapis.com/protocol.ProposalDeleteContract');
 
-        })
+        });
 
         it('should throw trying to cancel an already canceled proposal', async function () {
 
-            await broadcaster(await mcashWeb.transactionBuilder.deleteProposal(proposals[0].proposal_id));
+            await broadcaster(await mcashWeb.transactionBuilder.deleteProposal(proposals[0].proposal_id, ADDRESS_FOUNDATION), PRIVATE_KEY_FOUNDATION);
 
             await assertThrow(
-                mcashWeb.transactionBuilder.deleteProposal(proposals[0].proposal_id),
+                mcashWeb.transactionBuilder.deleteProposal(proposals[0].proposal_id, ADDRESS_FOUNDATION),
                 null,
-                `Proposal[${proposals[0].proposal_id}] canceled`);
+                `Proposal ${proposals[0].proposal_id} canceled`);
 
         })
 
@@ -943,46 +905,49 @@ describe('McashWeb.transactionBuilder', function () {
 
         it('should allows accounts[1] to freeze its balance', async function () {
 
-            const transaction = await mcashWeb.transactionBuilder.freezeBalance(100e6, 3, 'BANDWIDTH', accounts.b58[1])
+            const transaction = await mcashWeb.transactionBuilder.freezeBalance(100e6, 3, 'BANDWIDTH', accounts.b58[1]);
 
             const parameter = txPars(transaction);
-            // jlog(parameter)
             assert.equal(parameter.value.owner_address, accounts.hex[1]);
             assert.equal(parameter.value.frozen_balance, 100e6);
             assert.equal(parameter.value.frozen_duration, 3);
             assert.equal(parameter.type_url, 'type.googleapis.com/protocol.FreezeBalanceContract');
         })
 
-        // TODO add invalid params throws
-
     });
 
     describe("#unfreezeBalance", async function () {
 
-        // TODO this is not fully testable because the minimum time before unfreezing is 3 days
+        it('should allows accounts[1] to freeze its balance', async function () {
+            await broadcaster(mcashWeb.transactionBuilder.freezeBalance(100e8, 0, 'BANDWIDTH', accounts.b58[2]), accounts.pks[2]);
+
+            const transaction = await mcashWeb.transactionBuilder.unfreezeBalance('BANDWIDTH', accounts.b58[2]);
+
+            const parameter = txPars(transaction);
+            assert.equal(parameter.value.owner_address, accounts.hex[2]);
+            assert.equal(parameter.type_url, 'type.googleapis.com/protocol.UnfreezeBalanceContract');
+        })
 
     });
 
 
     describe.skip("#vote", async function () {
-        // this is not testable because on Tron Quickstart (like on Shasta) it is not possible to vote
 
         let url = 'https://xtron.network';
         // let witnesses;
 
-
         before(async function () {
 
-            await broadcaster(mcashWeb.transactionBuilder.createWitness(accounts.b58[0], url), accounts.pks[0])
+            await broadcaster(mcashWeb.transactionBuilder.createWitness(accounts.b58[0], url), accounts.pks[0]);
             await broadcaster(mcashWeb.transactionBuilder.freezeBalance(100e6, 3, 'BANDWIDTH', accounts.b58[1]), accounts.pks[1])
-        })
+        });
 
 
         it('should allows accounts[1] to vote for accounts[0] as SR', async function () {
-            let votes = {}
-            votes[accounts.hex[0]] = 5
+            let votes = {};
+            votes[accounts.hex[0]] = 5;
 
-            const transaction = await mcashWeb.transactionBuilder.vote(votes, accounts.b58[1])
+            const transaction = await mcashWeb.transactionBuilder.vote(votes, accounts.b58[1]);
             const parameter = txPars(transaction);
 
             assert.equal(parameter.value.owner_address, accounts.hex[1]);
@@ -1015,7 +980,7 @@ describe('McashWeb.transactionBuilder', function () {
                 userFeePercentage: 30,
                 originEnergyLimit: 9e6,
                 feeLimit: 9e8
-            })
+            });
             assert.equal(tx.raw_data.contract[0].parameter.value.new_contract.consume_user_resource_percent, 30);
             assert.equal(tx.raw_data.contract[0].parameter.value.new_contract.origin_energy_limit, 9e6);
             assert.equal(tx.raw_data.fee_limit, 9e8);
@@ -1029,7 +994,7 @@ describe('McashWeb.transactionBuilder', function () {
     describe("#triggerSmartContract", async function () {
     });
 
-    describe("#createTRXExchange", async function () {
+    describe("#createExchange", async function () {
     });
 
     describe("#injectExchangeTokens", async function () {

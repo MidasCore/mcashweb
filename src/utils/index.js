@@ -7,7 +7,7 @@ import * as abi from './abi';
 
 import validator from 'validator';
 import BigNumber from 'bignumber.js';
-import {ADDRESS_PREFIX} from 'utils/address';
+import {ADDRESS_PREFIX} from './address';
 
 const utils = {
     isValidURL(url) {
@@ -59,7 +59,7 @@ const utils = {
 
     isInteger(number) {
         if (number === null)
-            return false
+            return false;
         return Number.isInteger(
             Number(number)
         );
@@ -117,7 +117,7 @@ const utils = {
         if (this.isObject(event.result)) {
             for (var i = 0; i < abi.length; i++) {
                 let obj = abi[i];
-                if (obj.type == 'address' && obj.name in event.result)
+                if (obj.type === 'address' && obj.name in event.result)
                     event.result[obj.name] = ADDRESS_PREFIX + event.result[obj.name].substr(2).toLowerCase();
             }
         } else if (this.isArray(event.result)) {
@@ -127,7 +127,7 @@ const utils = {
                     type
                 } = abi[index];
 
-                if (type == 'address')
+                if (type === 'address')
                     result = ADDRESS_PREFIX + result.substr(2).toLowerCase();
 
                 obj[name] = result;
@@ -151,7 +151,7 @@ const utils = {
     isNotNullOrUndefined(val) {
         return val !== null && typeof val !== 'undefined';
     }
-}
+};
 
 export default {
     ...utils,

@@ -1,6 +1,6 @@
 import {AbiCoder} from './ethersUtils';
-import McashWeb from 'index';
-import {ADDRESS_PREFIX, ADDRESS_PREFIX_REGEX} from 'utils/address';
+import McashWeb from '../index';
+import {ADDRESS_PREFIX, ADDRESS_PREFIX_REGEX} from './address';
 
 const abiCoder = new AbiCoder();
 
@@ -20,7 +20,7 @@ export function decodeParams(names, types, output, ignoreMethodHash) {
         throw new Error('The encoded string is not valid. Its length must be a multiple of 64.');
 
     return abiCoder.decode(types, output).reduce((obj, arg, index) => {
-        if (types[index] == 'address')
+        if (types[index] === 'address')
             arg = ADDRESS_PREFIX + arg.substr(2).toLowerCase();
 
         if (names.length)

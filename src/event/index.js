@@ -1,6 +1,6 @@
-import McashWeb from 'index';
-import utils from 'utils';
-import providers from "./providers";
+import McashWeb from '../index';
+import utils from '../utils';
+import providers from "../providers";
 import querystring from "querystring";
 
 export default class Event {
@@ -23,7 +23,7 @@ export default class Event {
             throw new Error('Invalid event server provided');
 
         this.mcashWeb.eventServer = eventServer;
-        this.mcashWeb.eventServer.isConnected = () => this.mcashWeb.eventServer.request(healthcheck).then(() => true).catch(() => false);
+        this.mcashWeb.eventServer.setStatusPage(healthcheck);
     }
 
     getEventsByContractAddress(contractAddress = false, options = {}, callback = false) {
@@ -50,7 +50,7 @@ export default class Event {
             blockNumber: false,
             size: 20,
             page: 1
-        }, options)
+        }, options);
 
         if (!callback)
             return this.injectPromise(this.getEventsByContractAddress, contractAddress, options);
@@ -97,7 +97,7 @@ export default class Event {
         const qs = {
             size,
             page
-        }
+        };
 
         if (typeof filters === 'object' && Object.keys(filters).length > 0) {
             qs.filters = JSON.stringify(filters);
@@ -108,17 +108,17 @@ export default class Event {
         }
 
         if (onlyConfirmed)
-            qs.onlyConfirmed = onlyConfirmed
+            qs.onlyConfirmed = onlyConfirmed;
 
         if (onlyUnconfirmed && !onlyConfirmed)
-            qs.onlyUnconfirmed = onlyUnconfirmed
+            qs.onlyUnconfirmed = onlyUnconfirmed;
 
         if (sort)
-            qs.sort = sort
+            qs.sort = sort;
 
-        fingerprint = fingerprint || previousFingerprint || previousLastEventFingerprint
+        fingerprint = fingerprint || previousFingerprint || previousLastEventFingerprint;
         if (fingerprint)
-            qs.fingerprint = fingerprint
+            qs.fingerprint = fingerprint;
 
         return this.mcashWeb.eventServer.request(`event/contract/${routeParams.join('/')}?${querystring.stringify(qs)}`).then((data = false) => {
             if (!data)

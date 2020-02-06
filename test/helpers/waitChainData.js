@@ -47,7 +47,7 @@ module.exports = async function (type, ...params) {
                 }
                 case 'freezeBp': {
                     data = await mcashWeb.mcash.getUnconfirmedAccount(params[0]);
-                    isFound = data.frozen_for_bandiwdth && (data.frozen_for_bandiwdth.frozen_balance !== params[1]);
+                    isFound = data.frozen_for_bandwidth && (data.frozen_for_bandwidth.frozen_balance !== params[1]);
                     break;
                 }
                 case 'freezeEnergy': {

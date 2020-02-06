@@ -1,5 +1,5 @@
-import McashWeb from 'index';
-import utils from 'utils';
+import McashWeb from '../index';
+import utils from '../utils';
 import semver from 'semver';
 
 export default class Plugin {
@@ -15,12 +15,12 @@ export default class Plugin {
         let pluginInterface = {
             requires: '0.0.0',
             components: {}
-        }
+        };
         let result = {
             plugged: [],
             skipped: []
-        }
-        const plugin = new Plugin(this.mcashWeb)
+        };
+        const plugin = new Plugin(this.mcashWeb);
         if (utils.isFunction(plugin.pluginInterface)) {
             pluginInterface = plugin.pluginInterface(options)
         }
@@ -30,17 +30,17 @@ export default class Plugin {
                     // TODO implement new sub-classes
                     continue
                 }
-                let methods = pluginInterface.components[component]
-                let pluginNoOverride = this.mcashWeb[component].pluginNoOverride || []
+                let methods = pluginInterface.components[component];
+                let pluginNoOverride = this.mcashWeb[component].pluginNoOverride || [];
                 for (let method in methods) {
                     if (method === 'constructor' || (this.mcashWeb[component][method] &&
                         (pluginNoOverride.includes(method) // blacklisted methods
                             || /^_/.test(method)) // private methods
                     )) {
-                        result.skipped.push(method)
+                        result.skipped.push(method);
                         continue
                     }
-                    this.mcashWeb[component][method] = methods[method].bind(this.mcashWeb[component])
+                    this.mcashWeb[component][method] = methods[method].bind(this.mcashWeb[component]);
                     result.plugged.push(method)
                 }
             }
