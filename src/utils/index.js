@@ -15,7 +15,7 @@ const utils = {
             return false;
         return validator.isURL(url, {
             protocols: ['http', 'https'],
-            require_tld: false
+            require_tld: true
         });
     },
 
