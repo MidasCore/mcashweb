@@ -672,8 +672,10 @@ export default class TransactionBuilder {
                 if (!type || !utils.isString(type) || !type.length)
                     return callback('Invalid parameter type provided: ' + type);
 
-                if (type == 'address')
+                if (type === 'address')
                     value = toHex(value).replace(ADDRESS_PREFIX_REGEX, '0x');
+                else if (type === 'address[]')
+                    value = value.map(item => toHex(item).replace(ADDRESS_PREFIX_REGEX, '0x'));
 
                 types.push(type);
                 values.push(value);
@@ -824,6 +826,8 @@ export default class TransactionBuilder {
 
                 if (type === 'address')
                     value = toHex(value).replace(ADDRESS_PREFIX_REGEX, '0x');
+                else if (type === 'address[]')
+                    value = value.map(item => toHex(item).replace(ADDRESS_PREFIX_REGEX, '0x'));
 
                 types.push(type);
                 values.push(value);
