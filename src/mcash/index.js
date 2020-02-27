@@ -555,7 +555,8 @@ export default class Mcash {
             return this.injectPromise(this.verifyMessage, message, signature, address, useMcashHeader);
 
         if (!utils.isHex(message))
-            return callback('Expected hex message input');
+            message = McashWeb.toHex(message);
+            // return callback('Expected hex message input');
 
         if (Mcash.verifySignature(message, address, signature, useMcashHeader))
             return callback(null, true);
@@ -612,7 +613,8 @@ export default class Mcash {
         if (utils.isString(transaction)) {
 
             if (!utils.isHex(transaction))
-                return callback('Expected hex message input');
+                transaction = McashWeb.toHex(transaction);
+                // return callback('Expected hex message input');
 
             try {
                 const signatureHex = Mcash.signString(transaction, privateKey, useTronHeader)
